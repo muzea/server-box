@@ -13,7 +13,7 @@ function App() {
     if (!starter.current) {
       starter.current = bootV86({
         serial_container_xtermjs: document.getElementById("terminal")!,
-        screen_container: document.getElementById("screen_container")!,
+        // screen_container: document.getElementById("screen_container")!,
       });
     }
   }, []);

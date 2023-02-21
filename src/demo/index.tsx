@@ -58,11 +58,15 @@ export class ExampleApp extends React.PureComponent<{}, ExampleAppState> {
       direction: "row",
       first: 1,
       second: {
-        direction: "column",
-        first: 2,
-        second: 3,
+        direction: "row",
+        first: {
+          direction: "column",
+          first: 2,
+          second: 3,
+        },
+        second: 4,
       },
-      splitPercentage: 40,
+      splitPercentage: 10,
     },
     currentTheme: "Blueprint Dark",
   };
@@ -70,28 +74,26 @@ export class ExampleApp extends React.PureComponent<{}, ExampleAppState> {
   render() {
     const totalWindowCount = getLeaves(this.state.currentNode).length;
     return (
-      <React.StrictMode>
-        <div className="react-mosaic-example-app">
-          {this.renderNavBar()}
-          <Mosaic<number>
-            renderTile={(count, path) => (
-              <ExampleWindow
-                count={count}
-                path={path}
-                totalWindowCount={totalWindowCount}
-              />
-            )}
-            zeroStateView={
-              <MosaicZeroState createNode={() => totalWindowCount + 1} />
-            }
-            value={this.state.currentNode}
-            onChange={this.onChange}
-            onRelease={this.onRelease}
-            className={THEMES[this.state.currentTheme]}
-            blueprintNamespace="bp4"
-          />
-        </div>
-      </React.StrictMode>
+      <div className="react-mosaic-example-app">
+        {this.renderNavBar()}
+        <Mosaic<number>
+          renderTile={(count, path) => (
+            <ExampleWindow
+              count={count}
+              path={path}
+              totalWindowCount={totalWindowCount}
+            />
+          )}
+          zeroStateView={
+            <MosaicZeroState createNode={() => totalWindowCount + 1} />
+          }
+          value={this.state.currentNode}
+          onChange={this.onChange}
+          onRelease={this.onRelease}
+          className={THEMES[this.state.currentTheme]}
+          blueprintNamespace="bp4"
+        />
+      </div>
     );
   }
 
@@ -256,6 +258,12 @@ function RenderScreen() {
   );
 }
 
+const TitleMap: Record<number, string> = {
+  1: "Project",
+  3: "Terminal",
+  4: "Preview",
+};
+
 const ExampleWindow = ({
   count,
   path,
@@ -263,12 +271,10 @@ const ExampleWindow = ({
 }: ExampleWindowProps) => {
   return (
     <MosaicWindow<number>
-      additionalControls={count === 3 ? additionalControls : EMPTY_ARRAY}
-      title={`Window ${count}`}
-      createNode={() => totalWindowCount + 1}
+      toolbarControls={EMPTY_ARRAY}
+      title={TitleMap[count]}
       path={path}
-      onDragStart={() => console.log("MosaicWindow.onDragStart")}
-      onDragEnd={(type) => console.log("MosaicWindow.onDragEnd", type)}
+      draggable={false}
       renderToolbar={
         count === 2
           ? () => <div className="toolbar-example">Custom Toolbar</div>
@@ -276,9 +282,10 @@ const ExampleWindow = ({
       }
     >
       <div className="example-window">
-        {count === 1 ? <RenderEditor /> : null}
-        {count === 2 ? <RenderScreen /> : null}
+        {count === 1 ? <div>文件数</div> : null}
+        {count === 2 ? <RenderEditor /> : null}
         {count === 3 ? <RenderTerminal /> : null}
+        {count > 3 ? <div>{count}</div> : null}
       </div>
     </MosaicWindow>
   );

@@ -2,7 +2,7 @@
   "name": "server-box",
   "license": "MIT",
   "scripts": {
-    "dev": "vite"
+    "dev": "vite --host"
   },
   "devDependencies": {
     "@monaco-editor/react": "^4.4.6",
@@ -22,6 +22,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-mosaic-component": "^6.0.0",
-    "v86": "^0.4.0"
+    "v86": "^0.4.0",
+    "zustand": "^4.3.3"
   }
 }

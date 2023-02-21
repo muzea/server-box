@@ -6,6 +6,7 @@ import vgabios from "v86/bios/vgabios.bin?url";
 import cdrom from "../images/alpine/virt-3.17.2/alpine-virt-3.17.2-x86.iso?url";
 import state from "../images/alpine/virt-3.17.2/v86state.bin?url";
 import "./lib/log";
+import { Emulator, VMOption } from "./vm";
 
 window.DEBUG = true;
 
@@ -30,13 +31,13 @@ interface IRenderDimensions {
 class FitAddon {
   private _terminal: Terminal | undefined;
 
-  constructor() {}
+  constructor() { }
 
   public activate(terminal: Terminal): void {
     this._terminal = terminal;
   }
 
-  public dispose(): void {}
+  public dispose(): void { }
 
   public fit(): void {
     const dims = this.proposeDimensions();
@@ -118,102 +119,6 @@ class FitAddon {
 
 function wrapWasm(options) {
   return v86Wasm(options).then((instance) => instance.exports);
-}
-
-export interface VMOption {
-  memory_size?: number;
-  vga_memory_size?: number;
-  serial_container_xtermjs?: HTMLElement;
-  screen_container?: HTMLElement;
-  cdrom?: {
-    url: string;
-  };
-  initial_state?: {
-    url: string;
-  };
-  autostart?: boolean;
-}
-
-export interface Emulator {
-  bus: { listeners: any; pair: any };
-  cpu_is_running: boolean;
-  disk_images: {
-    fda: any;
-    fdb: any;
-    hda: any;
-    hdb: any;
-    cdrom: t3;
-  };
-  emulator_bus: { listeners: any; pair: et };
-  keyboard_adapter: {
-    emu_enabled: true;
-    bus: any;
-    destroy: any;
-    init: any;
-    simulate_press: any;
-  };
-  mouse_adapter: {
-    enabled: true;
-    emu_enabled: true;
-    bus: any;
-    is_running: true;
-    destroy: any;
-  };
-  screen_adapter: {
-    bus: any;
-    init: any;
-    make_screenshot: any;
-    put_char: any;
-    timer: any;
-  };
-  serial_adapter: { element: HTMLElement; term: any; destroy: any };
-  speaker_adapter: {
-    bus: any;
-    audio_context: AudioContext;
-    mixer: any;
-    pcspeaker: any;
-    dac: any;
-  };
-  v86: {
-    running: boolean;
-    stopping: boolean;
-    tick_counter: number;
-    worker: Worker;
-    cpu: any;
-  };
-  /**
-   *
-   */
-  add_listener: (eventName: string, callback: any) => void;
-  automatically: Function;
-  continue_init: Function;
-  create_file: Function;
-  destroy: Function;
-  get_bzimage_initrd_from_filesystem: Function;
-  get_instruction_counter: Function;
-  get_statistics: Function;
-  is_running: Function;
-  keyboard_send_keys: Function;
-  keyboard_send_scancodes: Function;
-  keyboard_send_text: Function;
-  keyboard_set_status: Function;
-  lock_mouse: Function;
-  mount_fs: Function;
-  mouse_set_status: Function;
-  read_file: Function;
-  read_memory: Function;
-  remove_listener: Function;
-  restart: Function;
-  restore_state: Function;
-  run: Function;
-  save_state: Function;
-  screen_go_fullscreen: Function;
-  screen_make_screenshot: Function;
-  screen_set_scale: Function;
-  serial0_send: (char: string) => void;
-  serial_send_bytes: (serialName: string, data: Uint8Array) => void;
-  stop: Function;
-  write_memory: Function;
 }
 
 export function bootV86(option: VMOption) {

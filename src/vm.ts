@@ -2,6 +2,235 @@ export interface V86 {
 
 }
 
+export interface AbstractFileStorage {
+    /**
+     * Read a portion of a file.
+     * null if file does not exist.
+     */
+    read(sha256sum: string, offset: number, count: number): Promise<Uint8Array>;
+
+    /**
+     * Add a read-only file to the filestorage.
+     */
+    cache(sha256sum: string, data: Uint8Array): Promise<any>;
+
+    /**
+     * Call this when the file won't be used soon, e.g. when a file closes or when this immutable
+     * version is already out of date. It is used to help prevent accumulation of unused files in
+     * memory in the long run for some FileStorage mediums.
+     */
+    uncache(sha256sum: string): void
+}
+
+export interface Qidcounter {
+    last_qidnumber: number
+}
+
+export declare class FS {
+    /**
+     *
+     * @param fileStorageInstance
+     * @param qidcounter  Another fs's qidcounter to synchronise with.
+     */
+    constructor(fileStorageInstance: AbstractFileStorage, qidcounter: Qidcounter);
+    // FIX_ME
+    private get_state(): void
+    // FIX_ME
+    private set_state(): void
+    AddEvent(id: number, OnEvent: () => void): void
+    HandleEvent(id: number): void
+    // FIX_ME
+    private load_from_json(): void
+    LoadRecursive(data: any[], parentid: number): void
+    LoadDir(parentid: number, children: any[][]): void
+    // FIX_ME
+    private should_be_linked(): void
+    // FIX_ME
+    private link_under_dir(): void
+    // FIX_ME
+    private unlink_from_dir(): void
+    PushInode(inode: Inode, parentid: number, name: string): void
+    // FIX_ME
+    private divert(): void
+    // FIX_ME
+    private copy_inode(): void
+
+    CreateInode(): Inode
+    /**
+     * Note: parentid = -1 for initial root directory.
+     * @returns idx
+     */
+    CreateDirectory(name: string, parentid: number): number;
+    /**
+     * @returns idx
+     */
+    CreateFile(filename: string, parentid: number): number;
+    /**
+     * @returns idx
+     */
+    CreateNode(filename: string, parentid: number, major: number, minor: number): void;
+    /**
+     * @returns idx
+     */
+    CreateSymlink(filename: string, parentid: number, symlink: string): number;
+    /**
+     * @returns idx
+     */
+    CreateTextFile(filename: string, parentid: number, str: string): number;
+    /**
+     * @returns idx
+     */
+    CreateBinaryFile(filename: string, parentid: number, buffer: Uint8Array): Promise<number>;
+
+    OpenInode(id: number, mode: number): void;
+    CloseInode(id: number): Promise<void>;
+
+    /**
+     * @returns 0 if success, or -errno if failured.
+     */
+    Rename(olddirid: number, oldname: string, newdirid: number, newname: string): Promise<number>;
+    Write(id: number, offset: number, count: number, buffer: Uint8Array): Promise<void>;
+    Read(inodeid: number, offset: number, count: number): Promise<Uint8Array>;
+    Search(parentid: number, name: string): void
+
+    CountUsedInodes(): void;
+    CountFreeInodes(): void;
+    GetTotalSize(): void;
+    GetSpace(): void;
+
+    GetDirectoryName(): void;
+    GetFullPath(): void;
+
+    Link(): void;
+    Unlink(): void;
+
+    DeleteData(): void;
+    // FIX_ME
+    private get_buffer(): void;
+    // FIX_ME
+    private get_data(): void;
+    // FIX_ME
+    private set_data(): void;
+
+    GetInode(): void;
+    ChangeSize(): void;
+    SearchPath(): void;
+    GetRecursiveList(): void;
+    RecursiveDelete(): void;
+    DeleteNode(): void;
+    NotifyListeners(): void;
+    Check(): void;
+    FillDirectory(): void;
+    RoundToDirentry(): void;
+    IsDirectory(): void;
+    IsEmpty(): void;
+    GetChildren(): void;
+    GetParent(): void;
+
+    PrepareCAPs(): void;
+
+    // FIX_ME
+    private set_forwarder(): void;
+    // FIX_ME
+    private create_forwarder(): void;
+    // FIX_ME
+    private is_forwarder(): void;
+    // FIX_ME
+    private is_a_root(): void;
+    // FIX_ME
+    private get_forwarder(): void;
+    // FIX_ME
+    private delete_forwarder(): void;
+    // FIX_ME
+    private follow_fs(): void;
+
+    Mount(): void;
+    DescribeLock(type: number, start: number, length: number, proc_id: number, client_id: string): FSLockRegion;
+    /**
+     * @return The first conflicting lock found, or null if requested lock is possible.
+     */
+    GetLockn(id: number, request: FSLockRegion): FSLockRegion | null;
+
+
+    /**
+     * @return One of P9_LOCK_SUCCESS / P9_LOCK_BLOCKED / P9_LOCK_ERROR / P9_LOCK_GRACE.
+     */
+    Lockn(id: number, request: FSLockRegion, flags: number): number;
+
+
+    private read_dir(path: string): undefined | any[];
+    private read_file(file: string): Promise<Uint8Array | null>
+}
+
+export declare class FSLockRegion {
+    constructor();
+    type: number;
+    start: number;
+    length: number;
+    proc_id: number;
+    client_id: string;
+
+    get_state(): [number, number, number, number, string];
+    set_state(state: [number, number, number, number, string]): void;
+    clone(): FSLockRegion;
+    conflicts_with(region: FSLockRegion): boolean;
+    is_alike(region: FSLockRegion): boolean;
+    may_merge_after(region: FSLockRegion): boolean;
+}
+
+export declare class FSMountInfo {
+    fs: FS;
+    backtrack: Map<number, number>;
+    constructor(fs: FS);
+
+    get_state(): void;
+    set_state(): void;
+}
+
+export declare class Inode {
+    /**
+     *  maps filename to inode id
+     */
+    direntries: Map<any, any>;
+    status: number;
+    size: number;
+    uid: number;
+    gid: number;
+    fid: number;
+    ctime: number;
+    atime: number;
+    mtime: number;
+    major: number;
+    minor: number;
+    symlink: string;
+    mode: number;
+    qid: {
+        type: number;
+        version: number;
+        path: number;
+    };
+    caps: any;
+    nlinks: number;
+    sha256sum: string;
+
+    /**
+     * lock regions applied to the file, sorted by starting offset.
+     */
+    locks: FSLockRegion[];
+
+    /**
+     * For forwarders:
+     * which fs in this.mounts does this inode forward to?
+     */
+    mount_id: number;
+    /**
+     * which foreign inode id does it represent?
+     */
+    foreign_id: number;
+
+    get_state(): any[];
+    set_state(state: any[]): void;
+}
 
 
 /**
@@ -219,7 +448,7 @@ export interface Starter {
     /**
      * @internal
      */
-    get_bzimage_initrd_from_filesystem: (fs9p: any) => void;
+    get_bzimage_initrd_from_filesystem: (fs9p: FS) => void;
     get_instruction_counter: Function;
     get_statistics: Function;
     is_running: Function;
@@ -228,7 +457,6 @@ export interface Starter {
     keyboard_send_text: Function;
     keyboard_set_status: Function;
     lock_mouse: Function;
-    mount_fs: Function;
     mouse_set_status: Function;
     read_file: Function;
     read_memory: Function;
@@ -244,4 +472,10 @@ export interface Starter {
     serial_send_bytes: (serialName: string, data: Uint8Array) => void;
     stop: Function;
     write_memory: Function;
+
+    /**
+     * must set filesystem `true`
+     */
+    fs9p?: FS;
+    mount_fs: Function;
 }

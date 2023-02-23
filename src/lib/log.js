@@ -14,7 +14,7 @@ function do_the_log(message) {
  */
 var dbg_log = (function () {
   if (!window.DEBUG) {
-    return function () {};
+    return function () { };
   }
 
   /** @const @type {Object.<number, string>} */

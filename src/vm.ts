@@ -428,7 +428,8 @@ export interface VMOption {
     network_relay_url?: any;
 }
 
-export interface Starter {
+export declare class Starter {
+    constructor(option: VMOption);
     bus: { listeners: any; pair: any };
     cpu_is_running: boolean;
     disk_images: {
@@ -478,18 +479,17 @@ export interface Starter {
     /**
      *
      */
-    add_listener: (eventName: string, callback: any) => void;
+    add_listener(eventName: string, callback: any): void;
     automatically: Function;
     /**
      * @internal
      */
-    continue_init: (emulator: V86, options: VMOption) => void;
-    create_file: Function;
+    continue_init(emulator: V86, options: VMOption): void;
     destroy: Function;
     /**
      * @internal
      */
-    get_bzimage_initrd_from_filesystem: (fs9p: FS) => void;
+    get_bzimage_initrd_from_filesystem(fs9p: FS): void;
     get_instruction_counter: Function;
     get_statistics: Function;
     is_running: Function;
@@ -509,8 +509,8 @@ export interface Starter {
     screen_go_fullscreen: Function;
     screen_make_screenshot: Function;
     screen_set_scale: Function;
-    serial0_send: (char: string) => void;
-    serial_send_bytes: (serialName: string, data: Uint8Array) => void;
+    serial0_send(char: string): void;
+    serial_send_bytes(serialName: string, data: Uint8Array): void;
     stop: Function;
     write_memory: Function;
 
@@ -518,5 +518,17 @@ export interface Starter {
      * must set filesystem `true`
      */
     fs9p?: FS;
-    mount_fs: Function;
+    /**
+     * Mount another filesystem to the current filesystem.
+     * @param path Path for the mount point
+     * @param baseurl
+     * @param basefs As a JSON string
+     * @param callback
+     */
+    mount_fs(path: string, baseurl?: string, basefs?: string, callback?: Function): void;
+    /**
+     * Write to a file in the 9p filesystem. Nothing happens if no filesystem has
+     * been initialized.
+     */
+    create_file(file: string, data: Uint8Array): Promise<void>;
 }

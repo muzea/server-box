@@ -91,20 +91,32 @@ export declare class FS {
     Rename(olddirid: number, oldname: string, newdirid: number, newname: string): Promise<number>;
     Write(id: number, offset: number, count: number, buffer: Uint8Array): Promise<void>;
     Read(inodeid: number, offset: number, count: number): Promise<Uint8Array>;
-    Search(parentid: number, name: string): void
+    /**
+     * @returns idx
+     */
+    Search(parentid: number, name: string): void;
 
-    CountUsedInodes(): void;
-    CountFreeInodes(): void;
-    GetTotalSize(): void;
-    GetSpace(): void;
+    CountUsedInodes(): number;
+    CountFreeInodes(): number;
+    GetTotalSize(): number;
+    /**
+     * FIX_SOURCE
+     */
+    GetSpace(): number;
 
-    GetDirectoryName(): void;
-    GetFullPath(): void;
+    GetDirectoryName(idx: number): string;
+    GetFullPath(idx: number): string;
 
-    Link(): void;
-    Unlink(): void;
+    /**
+     * @returns 0 if success, or -errno if failured.
+     */
+    Link(parentid: number, targetid: number, name: string): number;
+    /**
+     * @returns 0 if success, or -errno if failured.
+     */
+    Unlink(parentid: number, name: string): number;
 
-    DeleteData(): void;
+    DeleteData(idx: number): Promise<void>;
     // FIX_ME
     private get_buffer(): void;
     // FIX_ME
@@ -112,22 +124,47 @@ export declare class FS {
     // FIX_ME
     private set_data(): void;
 
-    GetInode(): void;
-    ChangeSize(): void;
-    SearchPath(): void;
-    GetRecursiveList(): void;
-    RecursiveDelete(): void;
-    DeleteNode(): void;
-    NotifyListeners(): void;
+    GetInode(idx: number): Inode;
+    ChangeSize(idx: number, newsize: number): Promise<void>;
+    SearchPath(path: string): {
+        id: number;
+        parentid: number;
+        name: string;
+        forward_path: string | null;
+    };
+    /**
+     *
+     * @param dirid
+     * @param list is a ref list, contain the result
+     */
+    GetRecursiveList(dirid: number, list: { parentid: number, name: string }[]): void;
+    RecursiveDelete(path: string): void;
+    DeleteNode(path: string): void;
+    /**
+     * FIX_SOURCE
+     * @deprecated
+     */
+    NotifyListeners(id: number, action: string, info: any): void;
     Check(): void;
-    FillDirectory(): void;
-    RoundToDirentry(): void;
-    IsDirectory(): void;
-    IsEmpty(): void;
-    GetChildren(): void;
-    GetParent(): void;
+    FillDirectory(dirid: number): void;
+    RoundToDirentry(dirid: number, offset_target: number): number;
+    IsDirectory(idx: number): boolean;
+    IsEmpty(idx: number): boolean;
+    GetChildren(idx: number): string[];
+    GetParent(idx: number): number;
 
-    PrepareCAPs(): void;
+    /**
+     *  only support for security.capabilities
+     *  should return a  "struct vfs_cap_data" defined in
+     *  linux/capability for format
+     *  check also:
+     *    sys/capability.h
+     *    http://lxr.free-electrons.com/source/security/commoncap.c#L376
+     *    http://man7.org/linux/man-pages/man7/capabilities.7.html
+     *    http://man7.org/linux/man-pages/man8/getcap.8.html
+     *    http://man7.org/linux/man-pages/man3/libcap.3.html
+     */
+    PrepareCAPs(id: number): number;
 
     // FIX_ME
     private set_forwarder(): void;
@@ -144,7 +181,11 @@ export declare class FS {
     // FIX_ME
     private follow_fs(): void;
 
-    Mount(): void;
+    /**
+     * Mount another filesystem to given path.
+     * @returns inode id of mount point if successful, or -errno if mounting failed.
+     */
+    Mount(path: string, fs: FS): number;
     DescribeLock(type: number, start: number, length: number, proc_id: number, client_id: string): FSLockRegion;
     /**
      * @return The first conflicting lock found, or null if requested lock is possible.

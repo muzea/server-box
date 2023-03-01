@@ -1,9 +1,9 @@
-import { Classes, HTMLSelect, Tree } from "@blueprintjs/core";
+import { Classes, HTMLSelect, Tree, TreeNodeInfo } from "@blueprintjs/core";
 import { IconNames } from "@blueprintjs/icons";
 import classNames from "classnames";
 // @ts-ignore
 import dropRight from "lodash/dropRight";
-import React from "react";
+import React, { useCallback } from "react";
 
 import {
   Corner,
@@ -22,15 +22,17 @@ import {
   updateTree,
 } from "react-mosaic-component";
 
+import Editor from "@monaco-editor/react";
+import loader from "@monaco-editor/loader";
+import { useFs } from "../state/fs";
+
 import "@blueprintjs/core/lib/css/blueprint.css";
 import "@blueprintjs/icons/lib/css/blueprint-icons.css";
 import "./carbon.less";
 import "./example.less";
+import styles from "./style.module.less";
 
-import Editor from "@monaco-editor/react";
-import loader from '@monaco-editor/loader';
-import { useFs } from "../state/fs";
-loader.config({ paths: { vs: 'https://gw.alipayobjects.com/os/lib/monaco-editor/0.36.1/min/vs' } });
+loader.config({ paths: { vs: "https://gw.alipayobjects.com/os/lib/monaco-editor/0.36.1/min/vs" } });
 
 const version = "0.0.1";
 
@@ -74,16 +76,8 @@ export class ExampleApp extends React.PureComponent<{}, ExampleAppState> {
       <div className="react-mosaic-example-app">
         {this.renderNavBar()}
         <Mosaic<number>
-          renderTile={(count, path) => (
-            <ExampleWindow
-              count={count}
-              path={path}
-              totalWindowCount={totalWindowCount}
-            />
-          )}
-          zeroStateView={
-            <MosaicZeroState createNode={() => totalWindowCount + 1} />
-          }
+          renderTile={(count, path) => <ExampleWindow count={count} path={path} totalWindowCount={totalWindowCount} />}
+          zeroStateView={<MosaicZeroState createNode={() => totalWindowCount + 1} />}
           value={this.state.currentNode}
           onChange={this.onChange}
           onRelease={this.onRelease}
@@ -115,17 +109,9 @@ export class ExampleApp extends React.PureComponent<{}, ExampleAppState> {
     const totalWindowCount = getLeaves(currentNode).length;
     if (currentNode) {
       const path = getPathToCorner(currentNode, Corner.TOP_RIGHT);
-      const parent = getNodeAtPath(
-        currentNode,
-        dropRight(path)
-      ) as MosaicParent<number>;
-      const destination = getNodeAtPath(
-        currentNode,
-        path
-      ) as MosaicNode<number>;
-      const direction: MosaicDirection = parent
-        ? getOtherDirection(parent.direction)
-        : "row";
+      const parent = getNodeAtPath(currentNode, dropRight(path)) as MosaicParent<number>;
+      const destination = getNodeAtPath(currentNode, path) as MosaicNode<number>;
+      const direction: MosaicDirection = parent ? getOtherDirection(parent.direction) : "row";
 
       let first: MosaicNode<number>;
       let second: MosaicNode<number>;
@@ -161,55 +147,36 @@ export class ExampleApp extends React.PureComponent<{}, ExampleAppState> {
       <div className={classNames(Classes.NAVBAR, Classes.DARK)}>
         <div className={Classes.NAVBAR_GROUP}>
           <div className={Classes.NAVBAR_HEADING}>
-            <a href="https://github.com/nomcopter/react-mosaic">
+            <a href="https://github.com/muzea/server-box">
               server-box <span className="version">v{version}</span>
             </a>
           </div>
         </div>
         <div className={classNames(Classes.NAVBAR_GROUP, Classes.BUTTON_GROUP)}>
-          <label
-            className={classNames(
-              "theme-selection",
-              Classes.LABEL,
-              Classes.INLINE
-            )}
-          >
+          <label className={classNames("theme-selection", Classes.LABEL, Classes.INLINE)}>
             Theme:
             <HTMLSelect
               value={this.state.currentTheme}
-              onChange={(e) =>
-                this.setState({ currentTheme: e.currentTarget.value as Theme })
-              }
+              onChange={(e) => this.setState({ currentTheme: e.currentTarget.value as Theme })}
             >
-              {React.Children.toArray(
-                Object.keys(THEMES).map((label) => <option>{label}</option>)
-              )}
+              {React.Children.toArray(Object.keys(THEMES).map((label) => <option>{label}</option>))}
             </HTMLSelect>
           </label>
           <div className="navbar-separator" />
           <span className="actions-label">Example Actions:</span>
           <button
-            className={classNames(
-              Classes.BUTTON,
-              Classes.iconClass(IconNames.GRID_VIEW)
-            )}
+            className={classNames(Classes.BUTTON, Classes.iconClass(IconNames.GRID_VIEW))}
             onClick={this.autoArrange}
           >
             Auto Arrange
           </button>
           <button
-            className={classNames(
-              Classes.BUTTON,
-              Classes.iconClass(IconNames.ARROW_TOP_RIGHT)
-            )}
+            className={classNames(Classes.BUTTON, Classes.iconClass(IconNames.ARROW_TOP_RIGHT))}
             onClick={this.addToTopRight}
           >
             Add Window to Top Right
           </button>
-          <a
-            className="github-link"
-            href="https://github.com/nomcopter/react-mosaic"
-          >
+          <a className="github-link" href="https://github.com/nomcopter/react-mosaic">
             <img src={""} />
           </a>
         </div>
@@ -225,31 +192,20 @@ interface ExampleWindowProps {
 }
 
 function RenderFileTree() {
-  const fs = useFs()
-  return (
-    <Tree
-      contents={fs.tree}
-    />
-  );
+  const fs = useFs();
+
+  const handleNodeClick = useCallback((info: TreeNodeInfo) => {}, []);
+
+  return <Tree className={styles.fileTree} contents={fs.tree} onNodeClick={handleNodeClick} />;
 }
 function RenderTerminal() {
-  return (
-    <div
-      id="terminal"
-      className="hide-scrollbar"
-      style={{ height: "100%", width: "100%" }}
-    />
-  );
+  return <div id="terminal" className={styles.terminal} style={{ height: "100%", width: "100%" }} />;
 }
 
 function RenderEditor() {
   return (
     <div id="editor" style={{ height: "100%", width: "100%" }}>
-      <Editor
-        theme="vs-dark"
-        defaultLanguage="javascript"
-        defaultValue="// some comment"
-      />
+      <Editor theme="vs-dark" defaultLanguage="javascript" defaultValue="// some comment" path="main.js" />
     </div>
   );
 }
@@ -269,22 +225,14 @@ const TitleMap: Record<number, string> = {
   4: "Preview",
 };
 
-const ExampleWindow = ({
-  count,
-  path,
-  totalWindowCount,
-}: ExampleWindowProps) => {
+const ExampleWindow = ({ count, path, totalWindowCount }: ExampleWindowProps) => {
   return (
     <MosaicWindow<number>
       toolbarControls={EMPTY_ARRAY}
       title={TitleMap[count]}
       path={path}
       draggable={false}
-      renderToolbar={
-        count === 2
-          ? () => <div className="toolbar-example">Custom Toolbar</div>
-          : null
-      }
+      renderToolbar={count === 2 ? () => <div className="toolbar-example">Custom Toolbar</div> : null}
     >
       <div className="example-window">
         {count === 1 ? <RenderFileTree /> : null}

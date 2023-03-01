@@ -6,19 +6,23 @@ import vgabios from "@woodenfish/libv86/bios/vgabios.bin?url";
 
 import { FitAddon } from "./xterm.fit";
 
-const JS_DELIVR = 'https://cdn.jsdelivr.net/gh/muzea-demo/server-box-image@b1be2655acc0890179326b61ad783d5c9f6ea518/debian-10-full/';
-const GITHUB_RAW = 'https://raw.githubusercontent.com/muzea-demo/server-box-image/b1be2655acc0890179326b61ad783d5c9f6ea518/debian-10-full/';
+const JS_DELIVR =
+  "https://cdn.jsdelivr.net/gh/muzea-demo/server-box-image@b1be2655acc0890179326b61ad783d5c9f6ea518/debian-10-full/";
+const GITHUB_RAW =
+  "https://raw.githubusercontent.com/muzea-demo/server-box-image/b1be2655acc0890179326b61ad783d5c9f6ea518/debian-10-full/";
+const Local = "/temp_fs/debian-10-full/";
 
-const DEBIAN_ROOT = window.location.search.indexOf('jsdelivr') >= 0 ? JS_DELIVR : GITHUB_RAW;
+const isLocal = window.location.search.indexOf("local") >= 0;
+const isJsDelivr = window.location.search.indexOf("jsdelivr") >= 0;
+
+const DEBIAN_ROOT = isLocal ? Local : isJsDelivr ? JS_DELIVR : GITHUB_RAW;
 
 function getFsRoot() {
-  // const last = (debian_state as string).lastIndexOf("/");
-  // return "http://localhost:5173" + (debian_state as string).substring(0, last);
-  return DEBIAN_ROOT + 'rootfs-pack/';
+  return DEBIAN_ROOT + "rootfs-pack/";
 }
 
 function getStateFile() {
-  return DEBIAN_ROOT + 'state.bin.zst';
+  return DEBIAN_ROOT + "state.bin.zst";
 }
 
 export function bootV86(option: VMOption) {

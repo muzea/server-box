@@ -6,15 +6,8 @@ import "@blueprintjs/core/lib/css/blueprint.css";
 import "@blueprintjs/icons/lib/css/blueprint-icons.css";
 import { bootV86 } from "./boot";
 import { V86Starter } from "@woodenfish/libv86";
-
-function str2ab(str: string) {
-  var buf = new ArrayBuffer(str.length * 2); // 2 bytes for each char
-  var bufView = new Uint16Array(buf);
-  for (var i = 0, strLen = str.length; i < strLen; i++) {
-    bufView[i] = str.charCodeAt(i);
-  }
-  return new Uint8Array(buf);
-}
+import { saveGlobalFs, useFs } from "./state/fs"
+import { encodeToBytes } from "./util/utf8";
 
 function App() {
   const starter = useRef<V86Starter>();
@@ -30,9 +23,13 @@ function App() {
           console.log("mount_fs", res);
 
           instance.create_file(
-            "/project/main.js",
-            str2ab("console.log('Hello World')")
+            "/project/test.py",
+            encodeToBytes("print('Hello World!')\n")
           );
+          // @ts-ignore
+          saveGlobalFs(instance.fs9p!);
+
+          useFs.getState().SyncWith9p();
         });
       });
 

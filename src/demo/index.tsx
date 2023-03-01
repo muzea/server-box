@@ -1,4 +1,4 @@
-import { Classes, HTMLSelect } from "@blueprintjs/core";
+import { Classes, HTMLSelect, Tree } from "@blueprintjs/core";
 import { IconNames } from "@blueprintjs/icons";
 import classNames from "classnames";
 // @ts-ignore
@@ -22,8 +22,6 @@ import {
   updateTree,
 } from "react-mosaic-component";
 
-import { CloseAdditionalControlsButton } from "./CloseAdditionalControlsButton";
-
 import "@blueprintjs/core/lib/css/blueprint.css";
 import "@blueprintjs/icons/lib/css/blueprint-icons.css";
 import "./carbon.less";
@@ -31,6 +29,7 @@ import "./example.less";
 
 import Editor from "@monaco-editor/react";
 import loader from '@monaco-editor/loader';
+import { useFs } from "../state/fs";
 loader.config({ paths: { vs: 'https://gw.alipayobjects.com/os/lib/monaco-editor/0.36.1/min/vs' } });
 
 const version = "0.0.1";
@@ -42,10 +41,6 @@ export const THEMES = {
 };
 
 export type Theme = keyof typeof THEMES;
-
-const additionalControls = React.Children.toArray([
-  <CloseAdditionalControlsButton />,
-]);
 
 const EMPTY_ARRAY: any[] = [];
 
@@ -229,6 +224,14 @@ interface ExampleWindowProps {
   totalWindowCount: number;
 }
 
+function RenderFileTree() {
+  const fs = useFs()
+  return (
+    <Tree
+      contents={fs.tree}
+    />
+  );
+}
 function RenderTerminal() {
   return (
     <div
@@ -284,7 +287,7 @@ const ExampleWindow = ({
       }
     >
       <div className="example-window">
-        {count === 1 ? <div>文件数</div> : null}
+        {count === 1 ? <RenderFileTree /> : null}
         {count === 2 ? <RenderEditor /> : null}
         {count === 3 ? <RenderTerminal /> : null}
         {count > 3 ? <div>{count}</div> : null}

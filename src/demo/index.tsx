@@ -30,6 +30,8 @@ import "./carbon.less";
 import "./example.less";
 
 import Editor from "@monaco-editor/react";
+import loader from '@monaco-editor/loader';
+loader.config({ paths: { vs: 'https://gw.alipayobjects.com/os/lib/monaco-editor/0.36.1/min/vs' } });
 
 const version = "0.0.1";
 

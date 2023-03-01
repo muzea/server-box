@@ -1,27 +1,25 @@
 // @ts-nocheck
-import { VMOption, V86Starter } from "@woodenfish/libv86/build/libv86-debug";
-// import "@woodenfish/libv86/build/libv86";
+import { VMOption, V86Starter } from "@woodenfish/libv86";
 import v86Wasm from "@woodenfish/libv86/build/v86.wasm?url";
 import bios from "@woodenfish/libv86/bios/seabios.bin?url";
 import vgabios from "@woodenfish/libv86/bios/vgabios.bin?url";
-import debian_fs from "../images/debian/10-full/?url";
-import debian_state from "../images/debian/10-full/debian-state-base.bin.zst?url";
-import alpine_cdrom from "../images/alpine/virt-3.17.2/alpine-virt-3.17.2-x86.iso?url";
-import alpine_state from "../images/alpine/virt-3.17.2/v86state.bin.zst?url";
+
 import { FitAddon } from "./xterm.fit";
 
-window.DEBUG = true;
+const JS_DELIVR = 'https://cdn.jsdelivr.net/gh/muzea-demo/server-box-image@b1be2655acc0890179326b61ad783d5c9f6ea518/debian-10-full/';
+const GITHUB_RAW = 'https://raw.githubusercontent.com/muzea-demo/server-box-image/b1be2655acc0890179326b61ad783d5c9f6ea518/debian-10-full/';
+
+const DEBIAN_ROOT = window.location.search.indexOf('jsdelivr') >= 0 ? JS_DELIVR : GITHUB_RAW;
 
 function getFsRoot() {
-  const last = (debian_state as string).lastIndexOf("/");
-  return "http://localhost:5173" + (debian_state as string).substring(0, last);
+  // const last = (debian_state as string).lastIndexOf("/");
+  // return "http://localhost:5173" + (debian_state as string).substring(0, last);
+  return DEBIAN_ROOT + 'rootfs-pack/';
 }
 
-function wrapWasm(options) {
-  return v86Wasm(options).then((instance) => instance.exports);
+function getStateFile() {
+  return DEBIAN_ROOT + 'state.bin.zst';
 }
-
-console.log("fs root", getFsRoot());
 
 export function bootV86(option: VMOption) {
   const emulator = new V86Starter({
@@ -30,24 +28,13 @@ export function bootV86(option: VMOption) {
     wasm_path: v86Wasm,
     vga_memory_size: 8 * 1024 * 1024,
     memory_size: 512 * 1024 * 1024,
-    // filesystem: { base_url: getFsRoot() },
-    initial_state: { url: debian_state },
-    // bzimage_initrd_from_filesystem: true,
-    // cmdline:
-    //   "rw init=/bin/systemd root=host9p console=ttyS0 spectre_v2=off pti=off",
+    initial_state: { url: getStateFile() },
     filesystem: {
-      // basefs: {
-      //   url: getFsRoot() + "/debian-base-fs.json",
-      // },
       use_pack: {
         prefix_length: 2,
       },
-      baseurl: getFsRoot() + "/debian-9p-rootfs-pack-v2/",
+      baseurl: getFsRoot(),
     },
-    // memory_size: 256 * 1024 * 1024,
-    // cdrom: { url: alpine_cdrom },
-    // initial_state: { url: alpine_state },
-    // wasm_fn: wrapWasm,
     autostart: true,
     ...option,
   });

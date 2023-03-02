@@ -1,0 +1,44 @@
+.panel {
+  height: 400px;
+
+  padding-left: 8px;
+  padding-right: 8px;
+}
+.switcher {
+  height: 35px;
+  border-top-color: rgba(128, 128, 128, 0.35);
+  border-top-width: 1px;
+  border-top-style: solid;
+
+  box-sizing: border-box;
+
+  :global(.ant-tabs-nav) {
+    height: 35px;
+    margin: 0;
+
+    :global(.ant-tabs-tab) {
+      color: rgba(231, 231, 231, 0.6);
+    }
+
+    :global(.ant-tabs-tab-active) {
+      :global(.ant-tabs-tab-btn) {
+        color: rgb(231, 231, 231);
+      }
+    }
+    :global(.ant-tabs-tab-btn):active {
+      color: rgb(231, 231, 231);
+    }
+    :global(.ant-tabs-tab-btn):focus {
+      color: rgb(231, 231, 231);
+    }
+
+    :global(.ant-tabs-ink-bar) {
+      background: rgb(231, 231, 231);
+    }
+  }
+}
+
+:global(#terminal) {
+  width: calc(100% - 16px);
+  height: 365px;
+}

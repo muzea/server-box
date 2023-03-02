@@ -1,13 +1,9 @@
 import { useEffect, useRef } from "react";
-import { ExampleApp } from "./demo";
-
-import "react-mosaic-component/react-mosaic-component.css";
-import "@blueprintjs/core/lib/css/blueprint.css";
-import "@blueprintjs/icons/lib/css/blueprint-icons.css";
 import { bootV86 } from "./boot";
 import { V86Starter } from "@woodenfish/libv86";
-import { saveGlobalFs, useFs } from "./state/fs"
+import { saveGlobalFs, useFs } from "./state/fs";
 import { encodeToBytes } from "./util/utf8";
+import Layout from "./component/layout";
 
 function App() {
   const starter = useRef<Promise<V86Starter>>();
@@ -20,27 +16,24 @@ function App() {
 
       bootPromise.then((instance) => {
         instance.add_listener("emulator-loaded", () => {
-          instance.mount_fs("/project", undefined, undefined, (res: any) => {
+          instance.serial_adapter.term.setOption("theme", { background: "#1e1e1e" });
+          instance.mount_fs("/project", undefined, undefined, async (res: any) => {
             console.log("mount_fs", res);
 
-            instance.create_file(
-              "/project/test.py",
-              encodeToBytes("print('Hello World!')\n")
-            );
+            await instance.create_file("/project/test.py", encodeToBytes("print('Hello World!')\n"));
             // @ts-ignore
             saveGlobalFs(instance.fs9p!);
 
             useFs.getState().SyncWith9p();
           });
         });
-      })
-
+      });
 
       starter.current = bootPromise;
     }
   }, []);
 
-  return <ExampleApp />;
+  return <Layout />;
 }
 
 export default App;

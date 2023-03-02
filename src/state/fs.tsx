@@ -1,9 +1,7 @@
 import { create } from "zustand";
-import { Icon, TreeNodeInfo } from "@blueprintjs/core";
-import { Tooltip2, Classes as PopClasses } from "@blueprintjs/popover2";
+import type { DataNode, DirectoryTreeProps } from "antd/es/tree";
 import { FS } from "../vm";
 import { ProjectRoot } from "../const";
-import { IconNames } from "@blueprintjs/icons";
 
 let fs9p: FS;
 
@@ -11,8 +9,18 @@ export function saveGlobalFs(fs: FS) {
   fs9p = fs;
 }
 
+export function getGlobalFs() {
+  return fs9p;
+}
+
+const fileInfoMap = new Map<number, string>();
+
+export function getInodePath(idx: number) {
+  return fileInfoMap.get(idx)!;
+}
+
 export interface FsState {
-  tree: TreeNodeInfo[];
+  tree: DataNode[];
   SyncWith9p(): void;
   /**
    * 获取指定文件/目录的 idx
@@ -29,39 +37,29 @@ function getName(filePath: string) {
   return list[list.length - 1];
 }
 
-function buildFileTree(filePath: string): TreeNodeInfo {
+function buildFileTree(filePath: string): DataNode {
   const nodeInfo = fs9p.SearchPath(filePath);
+  fileInfoMap.set(nodeInfo.id, filePath);
   if (fs9p.IsDirectory(nodeInfo.id)) {
     // @ts-ignore
     const result = fs9p.read_dir(ProjectRoot) as string[];
     return {
-      childNodes: result.map((name) => buildFileTree(`${filePath}/${name}`)),
-      hasCaret: true,
-      icon: "folder-open",
-      id: nodeInfo.id,
-      isExpanded: true,
-      label: getName(filePath),
-      secondaryLabel: (
-        <Tooltip2 className={PopClasses.TOOLTIP2_INDICATOR} content={<span>New File</span>} minimal>
-          <Icon icon={IconNames.NewTextBox} />
-        </Tooltip2>
-      ),
+      title: getName(filePath),
+      key: nodeInfo.id,
+      children: result.map((name) => buildFileTree(`${filePath}/${name}`)),
     };
   } else {
     return {
-      icon: "document",
-      id: nodeInfo.id,
-      /**
-       * The main label for the node.
-       */
-      label: getName(filePath),
+      key: nodeInfo.id,
+      title: getName(filePath),
+      isLeaf: true,
     };
   }
 }
 
 export const useFs = create<FsState>((set) => {
   return {
-    tree: [] as TreeNodeInfo[],
+    tree: [] as DataNode[],
     SyncWith9p() {
       // TODO 改为订阅目录变化
       set({

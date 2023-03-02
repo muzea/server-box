@@ -543,10 +543,10 @@
     magic-string "^0.27.0"
     react-refresh "^0.14.0"
 
-"@woodenfish/libv86@0.0.2-alpha.6":
-  version "0.0.2-alpha.6"
-  resolved "https://registry.yarnpkg.com/@woodenfish/libv86/-/libv86-0.0.2-alpha.6.tgz#f7e9f91e8caa3947c528bb48f6af80a39559d02d"
-  integrity sha512-paYtXTbGohyeHhCKvDnYw4oJaPQSoSWB7PzzuZm2BhaGbEp9G6P8sCjjtgNEuvGUEFs/AUAHQj2lG+Qu2PUGpg==
+"@woodenfish/libv86@0.0.2-alpha.7":
+  version "0.0.2-alpha.7"
+  resolved "https://registry.yarnpkg.com/@woodenfish/libv86/-/libv86-0.0.2-alpha.7.tgz#2908c3d90269db679adc63880891889534d10b9c"
+  integrity sha512-px5sZ1FZqnmKKn0DxaKjmcZ0cdy1F8wHrhutre8bKKp6j4p2MbM34oRw4ZdRghBGQa2PzdWfDaSm8uNQGuJ9lw==
 
 ansi-styles@^3.2.1:
   version "3.2.1"

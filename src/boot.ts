@@ -36,8 +36,8 @@ export async function bootV86(option: VMOption) {
   const emulator = new V86Starter({
     // bios: { url: bios },
     // vga_bios: { url: vgabios },
-    bios: { url: biosBuffer },
-    vga_bios: { url: vgabiosBuffer },
+    bios: { buffer: biosBuffer },
+    vga_bios: { buffer: vgabiosBuffer },
     wasm_path: v86Wasm,
     vga_memory_size: 8 * 1024 * 1024,
     memory_size: 512 * 1024 * 1024,

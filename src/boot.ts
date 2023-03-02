@@ -5,6 +5,7 @@ import bios from "@woodenfish/libv86/bios/seabios.bin?url";
 import vgabios from "@woodenfish/libv86/bios/vgabios.bin?url";
 
 import { FitAddon } from "./xterm.fit";
+import { KV } from "./util/idb";
 
 const JS_DELIVR =
   "https://cdn.jsdelivr.net/gh/muzea-demo/server-box-image@b1be2655acc0890179326b61ad783d5c9f6ea518/debian-10-full/";
@@ -25,17 +26,29 @@ function getStateFile() {
   return DEBIAN_ROOT + "state.bin.zst";
 }
 
-export function bootV86(option: VMOption) {
+const kv = new KV();
+
+export async function bootV86(option: VMOption) {
+  await kv.loaded;
+  const initialStateBuffer = await kv.fetchCachedResource(getStateFile());
+  const biosBuffer = await kv.fetchCachedResource(bios);
+  const vgabiosBuffer = await kv.fetchCachedResource(vgabios);
   const emulator = new V86Starter({
-    bios: { url: bios },
-    vga_bios: { url: vgabios },
+    // bios: { url: bios },
+    // vga_bios: { url: vgabios },
+    bios: { url: biosBuffer },
+    vga_bios: { url: vgabiosBuffer },
     wasm_path: v86Wasm,
     vga_memory_size: 8 * 1024 * 1024,
     memory_size: 512 * 1024 * 1024,
-    initial_state: { url: getStateFile() },
+    // initial_state: { url: getStateFile() },
+    initial_state: {
+      buffer: initialStateBuffer
+    },
     filesystem: {
       use_pack: {
         prefix_length: 2,
+        idb_key: 'server_box_fs',
       },
       baseurl: getFsRoot(),
     },

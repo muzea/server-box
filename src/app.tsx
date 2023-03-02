@@ -10,30 +10,33 @@ import { saveGlobalFs, useFs } from "./state/fs"
 import { encodeToBytes } from "./util/utf8";
 
 function App() {
-  const starter = useRef<V86Starter>();
+  const starter = useRef<Promise<V86Starter>>();
   useEffect(() => {
     if (!starter.current) {
-      const instance = bootV86({
+      const bootPromise = bootV86({
         serial_container_xtermjs: document.getElementById("terminal")!,
         // screen_container: document.getElementById("screen_container")!,
       });
 
-      instance.add_listener("emulator-loaded", () => {
-        instance.mount_fs("/project", undefined, undefined, (res: any) => {
-          console.log("mount_fs", res);
+      bootPromise.then((instance) => {
+        instance.add_listener("emulator-loaded", () => {
+          instance.mount_fs("/project", undefined, undefined, (res: any) => {
+            console.log("mount_fs", res);
 
-          instance.create_file(
-            "/project/test.py",
-            encodeToBytes("print('Hello World!')\n")
-          );
-          // @ts-ignore
-          saveGlobalFs(instance.fs9p!);
+            instance.create_file(
+              "/project/test.py",
+              encodeToBytes("print('Hello World!')\n")
+            );
+            // @ts-ignore
+            saveGlobalFs(instance.fs9p!);
 
-          useFs.getState().SyncWith9p();
+            useFs.getState().SyncWith9p();
+          });
         });
-      });
+      })
 
-      starter.current = instance;
+
+      starter.current = bootPromise;
     }
   }, []);
 

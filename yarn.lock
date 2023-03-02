@@ -454,6 +454,18 @@
   resolved "https://registry.npmmirror.com/@juggle/resize-observer/-/resize-observer-3.4.0.tgz#08d6c5e20cf7e4cc02fd181c4b0c225cd31dbb60"
   integrity sha512-dfLbk+PwWvFzSxwk3n5ySL0hfBog779o8h68wK/7/APo/7cgyWp5jcXockbxdk5kFRkbeXWm4Fbi9FrdN381sA==
 
+"@kvs/indexeddb@^2.1.3":
+  version "2.1.3"
+  resolved "https://registry.yarnpkg.com/@kvs/indexeddb/-/indexeddb-2.1.3.tgz#68d2d2f1803e0988e8f294e898eab187357e5041"
+  integrity sha512-EabaF5Ab61Vk+RgNvKT4avAs4EFusHBD++DlyCdkb4isw1QZh7baO/f4SLPayI7UujHKYKPHBUjh5ZkXJTGllw==
+  dependencies:
+    "@kvs/types" "^2.1.1"
+
+"@kvs/types@^2.1.1":
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/@kvs/types/-/types-2.1.1.tgz#c05f2155af38a56f0848d248ee9ad5c5a9fe38ef"
+  integrity sha512-HRDt5IeTE7BZYCey3ZhTWzpYtv5mhXU8Nx3dHD99sXoovbakSy7BEcIWckHZf+4kwC3oyhr9Ee3lsQFOacTz3Q==
+
 "@monaco-editor/loader@^1.3.2":
   version "1.3.2"
   resolved "https://registry.yarnpkg.com/@monaco-editor/loader/-/loader-1.3.2.tgz#04effbb87052d19cd7d3c9d81c0635490f9bb6d8"
@@ -531,10 +543,10 @@
     magic-string "^0.27.0"
     react-refresh "^0.14.0"
 
-"@woodenfish/libv86@0.0.2-alpha.3":
-  version "0.0.2-alpha.3"
-  resolved "https://registry.npmmirror.com/@woodenfish/libv86/-/libv86-0.0.2-alpha.3.tgz#6b3a57ac8acba97dce3996f8c11e27eea06737ff"
-  integrity sha512-LORT8pAKNum2r/+ApPxpuX4m2Yuepfx5qzHthmeWDbdNNa4ClFDc/c2Qp9TiknQQk1gVVLBj1qJahRupEQ2zdg==
+"@woodenfish/libv86@0.0.2-alpha.6":
+  version "0.0.2-alpha.6"
+  resolved "https://registry.yarnpkg.com/@woodenfish/libv86/-/libv86-0.0.2-alpha.6.tgz#f7e9f91e8caa3947c528bb48f6af80a39559d02d"
+  integrity sha512-paYtXTbGohyeHhCKvDnYw4oJaPQSoSWB7PzzuZm2BhaGbEp9G6P8sCjjtgNEuvGUEFs/AUAHQj2lG+Qu2PUGpg==
 
 ansi-styles@^3.2.1:
   version "3.2.1"

@@ -58,11 +58,11 @@ export async function bootV86(option: VMOption) {
   emulator.add_listener("emulator-ready", async function () {
     console.log(performance.now());
 
-    emulator.serial_adapter.term.reset();
+    // emulator.serial_adapter.term.reset();
     setTimeout(() => {
       emulator.serial_adapter.term.loadAddon(fitAddon);
       fitAddon.fit();
-      emulator.serial0_send("\n");
+      // emulator.serial0_send("\n");
     }, 0);
   });
 

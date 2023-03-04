@@ -17,6 +17,40 @@
   text-transform: uppercase;
 
   padding-left: 20px;
+
+  display: flex;
+
+  .actions {
+    display: flex;
+
+    flex: 1;
+    align-items: center;
+    justify-content: right;
+
+    .action {
+      width: 20px;
+      height: 20px;
+      padding: 2px;
+      margin-right: 4px;
+
+      box-sizing: content-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 5px;
+      cursor: pointer;
+
+      &:hover {
+        background-color: rgba(90, 93, 94, 0.31);
+      }
+    }
+    :global(.action-label) {
+      font-size: 16px;
+      line-height: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
 }
 
 .fullContentMenu {

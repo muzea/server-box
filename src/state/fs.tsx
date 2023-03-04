@@ -1,9 +1,14 @@
 import { create } from "zustand";
 import type { DataNode, DirectoryTreeProps } from "antd/es/tree";
-import { FS } from "../vm";
+import type { FS } from "../vm";
 import { ProjectRoot } from "../const";
-import * as styles from "./fs.module.less";
 import { getName } from "../util/path";
+import * as styles from "./fs.module.less";
+
+/**
+ * fs 状态是同步文件变化来触发 react 更新
+ * 不能依赖其他 vm 之外的状态
+ */
 
 let fs9p: FS;
 

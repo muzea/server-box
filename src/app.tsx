@@ -20,6 +20,11 @@ function App() {
           instance.mount_fs("/project", undefined, undefined, async (res: any) => {
             console.log("mount_fs", res);
 
+            setTimeout(() => {
+              instance.serial_adapter.term.reset();
+              instance.serial0_send("cd /project\nclear\n");
+            }, 0);
+
             await instance.create_file("/project/test.py", encodeToBytes("print('Hello World!')\n"));
             // @ts-ignore
             saveGlobalFs(instance.fs9p!);

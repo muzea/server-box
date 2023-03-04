@@ -5,17 +5,26 @@ import fileIdMap from "@woodenfish/vscode-icon-map-seti";
 import { TabItem, useTabs } from "../../state/tabs";
 import styles from "./style.module.less";
 
-function Item(props: { item: TabItem }) {
-  const mapId = fileIdMap.languageIds[props.item.languageId];
+function Item(props: { item: TabItem; curent: boolean }) {
+  const { item, curent } = props;
+  const mapId = fileIdMap.languageIds[item.languageId];
   const info = fileIdMap.iconDefinitions[mapId];
+
+  const handleTabClick = React.useCallback(() => {
+    console.log("handleTabClick", item);
+  }, []);
+  const handleCloseClick = React.useCallback<React.MouseEventHandler<HTMLDivElement>>((e) => {
+    e.stopPropagation();
+    console.log("handleCloseClick", item);
+  }, []);
   return (
-    <div className={styles.item}>
+    <div className={klass(styles.item, curent && styles.curent)} onClick={handleTabClick}>
       <div className={klass(styles.icon, "seti-icon")} style={{ color: info.fontColor }}>
         {String.fromCharCode(parseInt(info.fontCharacter.replace("\\", ""), 16))}
       </div>
-      <div>{props.item.fileName}</div>
-      <div className={styles.close}>
-        <span>x</span>
+      <div>{item.fileName}</div>
+      <div className={styles.close} onClick={handleCloseClick}>
+        <a className="action-label codicon codicon-close" role="button" />
       </div>
     </div>
   );
@@ -34,7 +43,7 @@ export default function Tabs() {
   return (
     <div className={styles.tabs}>
       {tabsState.list.map((it) => (
-        <Item item={it} />
+        <Item key={it.filePath} curent={tabsState.currentIdx === it.idx} item={it} />
       ))}
     </div>
   );

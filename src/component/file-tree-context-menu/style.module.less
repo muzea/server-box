@@ -1,0 +1,32 @@
+.ContextMenuContent {
+  min-width: 220px;
+  overflow: hidden;
+  padding: 5px;
+
+  outline: rgb(69, 69, 69) solid 1px;
+  border-radius: 5px;
+  color: #fff;
+  background-color: #3c3c3c;
+  box-shadow: rgb(0 0 0 / 36%) 0px 2px 8px;
+}
+
+.ContextMenuItem {
+  font-size: 13px;
+  line-height: 1;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  height: 25px;
+  padding: 0 5px;
+  position: relative;
+  padding-left: 25px;
+  user-select: none;
+  outline: none;
+
+  cursor: pointer;
+}
+
+.ContextMenuItem[data-highlighted] {
+  background-color: rgb(4, 57, 94);
+  color: rgb(255, 255, 255);
+}

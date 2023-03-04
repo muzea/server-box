@@ -2,6 +2,8 @@ import { create } from "zustand";
 import type { DataNode, DirectoryTreeProps } from "antd/es/tree";
 import { FS } from "../vm";
 import { ProjectRoot } from "../const";
+import * as styles from "./fs.module.less";
+import { getName } from "../util/path";
 
 let fs9p: FS;
 
@@ -32,11 +34,6 @@ export interface FsState {
   ReadFile(name: string): Promise<Uint8Array>;
 }
 
-function getName(filePath: string) {
-  const list = filePath.split("/");
-  return list[list.length - 1];
-}
-
 function buildFileTree(filePath: string): DataNode {
   const nodeInfo = fs9p.SearchPath(filePath);
   fileInfoMap.set(nodeInfo.id, filePath);
@@ -44,14 +41,22 @@ function buildFileTree(filePath: string): DataNode {
     // @ts-ignore
     const result = fs9p.read_dir(ProjectRoot) as string[];
     return {
-      title: getName(filePath),
+      title: () => (
+        <div className={styles.fsItem}>
+          <div>{getName(filePath)}</div>
+        </div>
+      ),
       key: nodeInfo.id,
       children: result.map((name) => buildFileTree(`${filePath}/${name}`)),
     };
   } else {
     return {
       key: nodeInfo.id,
-      title: getName(filePath),
+      title: () => (
+        <div className={styles.fsItem}>
+          <div>{getName(filePath)}</div>
+        </div>
+      ),
       isLeaf: true,
     };
   }

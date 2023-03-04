@@ -3,12 +3,27 @@
 
   padding-left: 8px;
   padding-right: 8px;
+
+  position: relative;
+
+  :global(.ant-tabs-nav)::before {
+    display: none;
+  }
+
+  .divider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    height: 1px;
+    width: 100%;
+
+    background-color: rgba(128, 128, 128, 0.35);
+  }
 }
+
 .switcher {
   height: 35px;
-  border-top-color: rgba(128, 128, 128, 0.35);
-  border-top-width: 1px;
-  border-top-style: solid;
 
   box-sizing: border-box;
 
@@ -39,6 +54,20 @@
 }
 
 :global(#terminal) {
-  width: calc(100% - 16px);
+  width: 100%;
   height: 365px;
+
+  --vscode-scrollbarSlider-background: rgba(121, 121, 121, 0.4);
+  // --vscode-scrollbarSlider-hoverBackground: rgba(100, 100, 100, 0.7);
+  // --vscode-scrollbarSlider-activeBackground: rgba(191, 191, 191, 0.4);
+}
+:global(.xterm-viewport)::-webkit-scrollbar {
+  width: 14px;
+}
+:global(.xterm-viewport)::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 1px rgba(255, 255, 255, 0.7);
+}
+
+:global(.xterm-viewport)::-webkit-scrollbar-thumb {
+  background: var(--vscode-scrollbarSlider-background);
 }

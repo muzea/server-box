@@ -1,4 +1,26 @@
+@import "@vscode/codicons/dist/codicon.css";
+
 #app {
   width: 100vw;
   height: 100vh;
+}
+
+@font-face {
+  font-family: "seti-icon";
+  font-display: block;
+  src: url("https://raw.githubusercontent.com/microsoft/vscode/8a38481180ae939c53ceae3aab12a743b2a36493/extensions/theme-seti/icons/seti.woff")
+    format("woff2");
+}
+
+.seti-icon {
+  font: normal normal normal 16px/1 seti-icon;
+  display: inline-block;
+  text-decoration: none;
+  text-rendering: auto;
+  text-align: center;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
 }

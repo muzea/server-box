@@ -2,9 +2,10 @@ import React from "react";
 import klass from "classnames";
 import Sidebar from "../sidebar";
 import Panel from "../panel";
+import Monaco from "../monaco";
+import Tabs from "../tabs";
 
 import * as styles from "./style.module.less";
-import Monaco from "../monaco";
 
 export default function Layout() {
   return (
@@ -14,13 +15,11 @@ export default function Layout() {
         <Sidebar />
       </div>
       <div className={styles.right}>
-        <div className={styles.tabs}>tabs</div>
+        <Tabs />
         <div className={styles.monaco}>
           <Monaco />
         </div>
-        <div className={styles.panel}>
-          <Panel />
-        </div>
+        <Panel />
       </div>
     </div>
   );

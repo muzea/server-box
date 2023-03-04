@@ -22,6 +22,7 @@ const items: TabsProps["items"] = [
 export default function Panel() {
   return (
     <div className={styles.panel}>
+      <div className={styles.divider} />
       <div className={styles.switcher}>
         <Tabs defaultActiveKey="1" items={items} animated={false} size="small" />
       </div>

@@ -17,7 +17,6 @@ export const useMocacoState = create<MocacoState>((set) => {
     handleFileSelect(idx: number) {
       const fs = getGlobalFs();
       const inode = fs.GetInode(idx);
-      debugger
       fs.Read(idx, 0, inode.size).then((data) => {
         set({
           currentIdx: idx,

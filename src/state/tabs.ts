@@ -15,6 +15,8 @@ export interface TabsState {
   currentIdx: number;
   list: TabItem[];
   add(idx: number): void;
+  remove(idx: number): void;
+  select(idx: number): void;
 }
 
 export const useTabs = create<TabsState>((set, get) => {
@@ -41,6 +43,17 @@ export const useTabs = create<TabsState>((set, get) => {
           list: nextList,
         };
       });
+    },
+    remove(idx: number) {
+      if (idx !== get().currentIdx) {
+        return set({ list: get().list.filter((it) => it.idx !== idx) });
+      }
+    },
+    select(idx: number) {
+      const checkIndex = get().list.findIndex((it) => it.idx === idx);
+      if (checkIndex >= 0) {
+        return set({ currentIdx: get().list[checkIndex].idx });
+      }
     },
   };
 });

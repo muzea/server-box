@@ -800,10 +800,10 @@
   resolved "https://registry.npmmirror.com/@vscode/codicons/-/codicons-0.0.32.tgz#9e27de90d509c69762b073719ba3bf46c3cd2530"
   integrity sha512-3lgSTWhAzzWN/EPURoY4ZDBEA80OPmnaknNujA3qnI4Iu7AONWd9xF3iE4L+4prIe8E3TUnLQ4pxoaFTEEZNwg==
 
-"@woodenfish/libv86@0.0.2-alpha.7":
-  version "0.0.2-alpha.7"
-  resolved "https://registry.yarnpkg.com/@woodenfish/libv86/-/libv86-0.0.2-alpha.7.tgz#2908c3d90269db679adc63880891889534d10b9c"
-  integrity sha512-px5sZ1FZqnmKKn0DxaKjmcZ0cdy1F8wHrhutre8bKKp6j4p2MbM34oRw4ZdRghBGQa2PzdWfDaSm8uNQGuJ9lw==
+"@woodenfish/libv86@0.0.2-alpha.9":
+  version "0.0.2-alpha.9"
+  resolved "https://registry.npmmirror.com/@woodenfish/libv86/-/libv86-0.0.2-alpha.9.tgz#bcf1d13d3176a72626d5bceff9b44517a16b4f01"
+  integrity sha512-eTTx+FNioUcJ0haAxEpptf/yEaFL36gVELCyKl7IFm8fK2yjVwKfGO4PYMJ6Q3PDLOjNqd5qgcAA/H8fvVdQsQ==
 
 "@woodenfish/vscode-icon-map-seti@^0.0.2":
   version "0.0.2"
@@ -1860,6 +1860,21 @@ vite@^4.1.2:
     rollup "^3.10.0"
   optionalDependencies:
     fsevents "~2.3.2"
+
+xterm-addon-fit@^0.7.0:
+  version "0.7.0"
+  resolved "https://registry.npmmirror.com/xterm-addon-fit/-/xterm-addon-fit-0.7.0.tgz#b8ade6d96e63b47443862088f6670b49fb752c6a"
+  integrity sha512-tQgHGoHqRTgeROPnvmtEJywLKoC/V9eNs4bLLz7iyJr1aW/QFzRwfd3MGiJ6odJd9xEfxcW36/xRU47JkD5NKQ==
+
+xterm-addon-unicode11@^0.5.0:
+  version "0.5.0"
+  resolved "https://registry.npmmirror.com/xterm-addon-unicode11/-/xterm-addon-unicode11-0.5.0.tgz#41c0d96acc1e3bb6c6596eee64e163b6bca74be7"
+  integrity sha512-Jm4/g4QiTxiKiTbYICQgC791ubhIZyoIwxAIgOW8z8HWFNY+lwk+dwaKEaEeGBfM48Vk8fklsUW9u/PlenYEBg==
+
+xterm-addon-webgl@^0.14.0:
+  version "0.14.0"
+  resolved "https://registry.npmmirror.com/xterm-addon-webgl/-/xterm-addon-webgl-0.14.0.tgz#bd9136710bd5d130a0a51fd42e6d14ea39348236"
+  integrity sha512-zcxL4RVVjeS7NNFeKe5HHQI8OUEx3wZpE4EqLoTVipa2UrTR+qLsigo16UEp/yVcYBMhK7tsJ/AJokoEe/f0mw==
 
 yallist@^3.0.2:
   version "3.1.1"

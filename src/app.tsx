@@ -10,18 +10,22 @@ function App() {
   useEffect(() => {
     if (!starter.current) {
       const bootPromise = bootV86({
-        serial_container_xtermjs: document.getElementById("terminal")!,
+        // serial_container_xtermjs: document.getElementById("terminal")!,
         // screen_container: document.getElementById("screen_container")!,
       });
 
       bootPromise.then((instance) => {
         instance.add_listener("emulator-loaded", () => {
-          instance.serial_adapter.term.setOption("theme", { background: "#1e1e1e" });
+          const term = instance.serial_adapter.term;
+          term.options.theme = {
+            ...term.options.theme,
+            background: "#1e1e1e",
+          };
           instance.mount_fs("/project", undefined, undefined, async (res: any) => {
             console.log("mount_fs", res);
 
             setTimeout(() => {
-              instance.serial_adapter.term.reset();
+              term.reset();
               instance.serial0_send("cd /project\nclear\n");
             }, 0);
 

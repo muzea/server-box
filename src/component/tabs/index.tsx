@@ -11,10 +11,12 @@ function Item(props: { item: TabItem; curent: boolean }) {
   const info = fileIdMap.iconDefinitions[mapId];
 
   const handleTabClick = React.useCallback(() => {
+    useTabs.getState().select(item.idx);
     console.log("handleTabClick", item);
   }, []);
   const handleCloseClick = React.useCallback<React.MouseEventHandler<HTMLDivElement>>((e) => {
     e.stopPropagation();
+    useTabs.getState().remove(item.idx);
     console.log("handleCloseClick", item);
   }, []);
   return (

@@ -9,6 +9,7 @@ export interface MocacoState {
   path: string;
   content: string;
   languageId: string;
+  idx: number;
   handleFileSelect(idx: number): void;
 }
 
@@ -17,6 +18,7 @@ export const useMocacoState = create<MocacoState>((set) => {
     path: "empty",
     content: "",
     languageId: "",
+    idx: -1,
     handleFileSelect(idx: number) {
       const fs = getGlobalFs();
       const inode = fs.GetInode(idx);
@@ -24,8 +26,9 @@ export const useMocacoState = create<MocacoState>((set) => {
       fs.Read(idx, 0, inode.size).then((data) => {
         set({
           path: getInodePath(idx),
-          content: decodeFromBytes(data),
+          content: data ? decodeFromBytes(data) : "",
           languageId: fileIdMap.exts[getExtWithDot(getName(path))],
+          idx,
         });
       });
     },

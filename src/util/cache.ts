@@ -18,3 +18,7 @@ export async function fetchWithCache(url: string): Promise<Response> {
 export async function fetchArrayBuffer(url: string): Promise<ArrayBuffer> {
   return (await fetchWithCache(url)).arrayBuffer();
 }
+
+export async function fetchJson<T = any>(url: string): Promise<T> {
+  return (await fetchWithCache(url)).json();
+}

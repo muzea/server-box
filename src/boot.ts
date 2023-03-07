@@ -5,21 +5,19 @@ import v86Wasm from "@woodenfish/libv86/build/v86.wasm?url";
 import bios from "@woodenfish/libv86/bios/seabios.bin?url";
 import vgabios from "@woodenfish/libv86/bios/vgabios.bin?url";
 import { Unicode11Addon } from "xterm-addon-unicode11";
-import { WebglAddon } from 'xterm-addon-webgl';
+import { WebglAddon } from "xterm-addon-webgl";
 // import { FitAddon } from "./xterm.fit";
 import { FitAddon } from "xterm-addon-fit";
-import { fetchArrayBuffer } from "./util/cache";
+import { fetchArrayBuffer, fetchJson } from "./util/cache";
 
-const JS_DELIVR =
-  "https://cdn.jsdelivr.net/gh/muzea-demo/server-box-image@b1be2655acc0890179326b61ad783d5c9f6ea518/debian-10-full/";
 const GITHUB_RAW =
-  "https://raw.githubusercontent.com/muzea-demo/server-box-image/b1be2655acc0890179326b61ad783d5c9f6ea518/debian-10-full/";
-const Local = "/temp_fs/debian-10-slim/";
+  "https://raw.githubusercontent.com/muzea-demo/server-box-image/bdc5145f5adaaa2fd2df9ef3a06f71496d8ea491/debian-10-slim/";
+// const Local = "/temp_fs/debian-10-slim/";
+const Local = "/temp_fs/debian-pack-v3/";
 
 const isLocal = window.location.search.indexOf("local") >= 0;
-const isJsDelivr = window.location.search.indexOf("jsdelivr") >= 0;
 
-const DEBIAN_ROOT = isLocal ? Local : isJsDelivr ? JS_DELIVR : GITHUB_RAW;
+const DEBIAN_ROOT = isLocal ? Local : GITHUB_RAW;
 
 function getFsRoot() {
   return DEBIAN_ROOT + "rootfs-pack/";
@@ -70,26 +68,55 @@ class SerialAdapterXtermJS {
   }
 }
 
+async function buildFileMap() {
+  const data = await fetchJson<number[][]>(getFsRoot() + "map.json");
+
+  const fileMap = new Map<number, { p: number; s: number; l: number }>();
+  data.forEach((packData, packIndex) => {
+    let start = 0;
+    let index = 0;
+    const end = packData.length;
+    while (index < end) {
+      const hash = packData[index];
+      const size = packData[index + 1];
+
+      fileMap.set(hash, {
+        p: packIndex,
+        s: start,
+        l: size,
+      });
+
+      start += size;
+      index += 2;
+    }
+  });
+
+  return fileMap;
+}
+
 export async function bootV86(option: VMOption) {
   const initialStateBuffer = await fetchArrayBuffer(getStateFile());
   const biosBuffer = await fetchArrayBuffer(bios);
   const vgabiosBuffer = await fetchArrayBuffer(vgabios);
+
+  const fileMap = await buildFileMap();
+
   const emulator = new V86Starter({
-    // bios: { url: bios },
-    // vga_bios: { url: vgabios },
     bios: { buffer: biosBuffer },
     vga_bios: { buffer: vgabiosBuffer },
     wasm_path: v86Wasm,
     vga_memory_size: 8 * 1024 * 1024,
     memory_size: 512 * 1024 * 1024,
-    // initial_state: { url: getStateFile() },
     initial_state: {
       buffer: initialStateBuffer,
     },
     filesystem: {
+      // use_pack: {
+      //   prefix_length: 2,
+      //   idb_key: "server_box_fs",
+      // },
       use_pack: {
-        prefix_length: 2,
-        idb_key: "server_box_fs",
+        fileMap,
       },
       baseurl: getFsRoot(),
     },

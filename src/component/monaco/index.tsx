@@ -1,37 +1,86 @@
-import React, { useEffect } from "react";
-import Editor, { useMonaco } from "@monaco-editor/react";
+import React, { useCallback, useEffect, useRef } from "react";
+import type * as MonacoNS from "monaco-editor/esm/vs/editor/editor.api";
+// @ts-ignore
+import fileIdMap from "@woodenfish/vscode-icon-map-seti";
 import loader from "@monaco-editor/loader";
-import { useMocacoState } from "../../state/mocaco";
 import { useTabs } from "../../state/tabs";
+import * as styles from "./style.module.less";
+import { getGlobalFs, getInodePath } from "../../state/fs";
+import { getExtWithDot, getName } from "../../util/path";
+import { decodeFromBytes, encodeToBytes } from "../../util/utf8";
+
 loader.config({ paths: { vs: "https://gw.alipayobjects.com/os/lib/monaco-editor/0.36.1/min/vs" } });
 
-useTabs.subscribe((state) => {
-  if (state.currentIdx >= 0) {
-    console.log("handleFileSelect", state.currentIdx);
-    useMocacoState.getState().handleFileSelect(state.currentIdx);
-  }
-});
+type MonacoType = typeof MonacoNS;
+
+function getModel(monaco: MonacoType, value: string, language: string, path: string) {
+  const uri = monaco.Uri.parse(path);
+  const prev = monaco.editor.getModel(uri);
+  return prev || monaco.editor.createModel(value, language, uri);
+}
+
+const Readme = `致力于提供一个可交互的在线 Linux VM
+`;
 
 export default function Monaco() {
-  const state = useMocacoState();
-  console.log("state change", state);
+  const monacoRef = useRef<MonacoType>();
+  const editorRef = useRef<MonacoNS.editor.IStandaloneCodeEditor>();
 
-  const monaco = useMonaco();
+  const handleDomMount = useCallback((dom: HTMLDivElement) => {
+    loader.init().then((monaco: MonacoType) => {
+      monacoRef.current = monaco;
+      const defalutModel = getModel(monaco, Readme, "markdown", "Readme.md");
+      const editor = monaco.editor.create(dom, {
+        model: defalutModel,
+        theme: "vs-dark",
+      });
+
+      editorRef.current = editor;
+
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function () {
+        const model = editor.getModel();
+        if (model && model !== defalutModel) {
+          const idx = model.uri.path.substring(1);
+          const buffer = encodeToBytes(model.getValue());
+          getGlobalFs().Write(parseInt(idx, 10), 0, buffer.length, buffer);
+        }
+      });
+    });
+  }, []);
 
   useEffect(() => {
-    if (monaco) {
-      console.log("here is the monaco instance:", monaco);
+    return useTabs.subscribe((state) => {
+      const monaco = monacoRef.current;
+      if (!monaco) {
+        console.error("tabs change but editor not ready");
+        return;
+      }
+      if (state.currentIdx >= 0) {
+        console.log("handleFileSelect", state.currentIdx);
 
-      monaco.editor.addEditorAction({
-        id: "server-box-save-file",
-        label: "save file",
-        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
-        run: function () {
-          alert("save-file");
-        },
-      });
-    }
-  }, [monaco]);
+        const uri = monaco.Uri.parse(String(state.currentIdx));
+        const prev = monaco.editor.getModel(uri);
 
-  return <Editor theme="vs-dark" defaultLanguage={state.languageId} defaultValue={state.content} path={state.path} />;
+        if (prev) {
+          editorRef.current?.setModel(prev);
+          return;
+        }
+        const fs = getGlobalFs();
+        const inode = fs.GetInode(state.currentIdx);
+        const path = getInodePath(state.currentIdx);
+        fs.Read(state.currentIdx, 0, inode.size).then((data) => {
+          const model = getModel(
+            monaco,
+            data ? decodeFromBytes(data) : "",
+            fileIdMap.exts[getExtWithDot(getName(path))],
+            String(state.currentIdx)
+          );
+
+          editorRef.current?.setModel(model);
+        });
+      }
+    });
+  }, []);
+
+  return <div className={styles.editor} ref={handleDomMount} />;
 }

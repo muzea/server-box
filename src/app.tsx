@@ -21,20 +21,21 @@ function App() {
             ...term.options.theme,
             background: "#1e1e1e",
           };
-          instance.mount_fs("/project", undefined, undefined, async (res: any) => {
-            console.log("mount_fs", res);
+          instance.serial0_send("\n");
+          // instance.mount_fs("/project", undefined, undefined, async (res: any) => {
+          //   console.log("mount_fs", res);
 
-            setTimeout(() => {
-              term.reset();
-              instance.serial0_send("cd /project\nclear\n");
-            }, 0);
+          //   setTimeout(() => {
+          //     term.reset();
+          //     instance.serial0_send("cd /project\nclear\n");
+          //   }, 0);
 
-            await instance.create_file("/project/test.py", encodeToBytes("print('Hello World!')\n"));
-            // @ts-ignore
-            saveGlobalFs(instance.fs9p!);
+          //   await instance.create_file("/project/test.py", encodeToBytes("print('Hello World!')\n"));
+          //   // @ts-ignore
+          //   saveGlobalFs(instance.fs9p!);
 
-            useFs.getState().SyncWith9p();
-          });
+          //   useFs.getState().SyncWith9p();
+          // });
         });
       });
 

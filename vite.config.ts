@@ -4,34 +4,35 @@ import externalGlobals from "rollup-plugin-external-globals";
 // @ts-ignore
 import createExternal from "vite-plugin-external";
 
+const externals = {
+  react: "React",
+  "react-dom": "ReactDOM",
+  filer: "Filer",
+};
+
 export default defineConfig({
   root: "src",
   build: {
     target: "chrome94",
     outDir: "../dist",
     rollupOptions: {
-      external: ["react", "react-dom"],
+      external: Object.keys(externals),
       output: [
         {
-          globals: { react: "React", "react-dom": "ReactDOM" },
+          globals: externals,
         },
       ],
       plugins: [
-        externalGlobals({
-          react: "React",
-          "react-dom": "ReactDOM",
-        }),
+        externalGlobals(externals),
         // visualizer({ emitFile: true, open: true }),
       ],
     },
   },
   plugins: [
+    // @ts-ignore
     createExternal({
       development: {
-        externals: {
-          react: "React",
-          "react-dom": "ReactDOM",
-        },
+        externals,
       },
     }),
   ],

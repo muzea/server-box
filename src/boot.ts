@@ -6,25 +6,26 @@ import bios from "@woodenfish/libv86/bios/seabios.bin?url";
 import vgabios from "@woodenfish/libv86/bios/vgabios.bin?url";
 import { Unicode11Addon } from "xterm-addon-unicode11";
 import { WebglAddon } from "xterm-addon-webgl";
-// import { FitAddon } from "./xterm.fit";
 import { FitAddon } from "xterm-addon-fit";
+import qs from "qs";
 import { fetchArrayBuffer, fetchJson } from "./util/cache";
+import fs9p from "./fs";
 
-const GITHUB_RAW =
-  "https://raw.githubusercontent.com/muzea-demo/server-box-image/bdc5145f5adaaa2fd2df9ef3a06f71496d8ea491/debian-10-slim/";
+const CDN_ROOT = "https://misaka.wooden.fish/";
 // const Local = "/temp_fs/debian-10-slim/";
-const Local = "/temp_fs/debian-pack-v3/";
+const Local = "/temp_fs/";
 
-const isLocal = window.location.search.indexOf("local") >= 0;
+const query = qs.parse(window.location.search.slice(1));
+const isLocal = query.local && true;
 
-const DEBIAN_ROOT = isLocal ? Local : GITHUB_RAW;
+const DEBIAN_ROOT = isLocal ? Local : CDN_ROOT;
 
-function getFsRoot() {
-  return DEBIAN_ROOT + "rootfs-pack/";
+function gethddFile() {
+  return DEBIAN_ROOT + "linux.img";
 }
 
 function getStateFile() {
-  return DEBIAN_ROOT + "state.bin.zst";
+  return DEBIAN_ROOT + "linux-state.bin.zst";
 }
 
 class SerialAdapterXtermJS {
@@ -38,7 +39,6 @@ class SerialAdapterXtermJS {
     const term = new window["Terminal"]({ allowProposedApi: true });
     this.term = term;
     term.options.logLevel = "off";
-    term.write("This is the serial console. Whatever you type or paste here will be sent to COM1");
 
     const on_data_disposable = term["onData"](function (data) {
       for (let i = 0; i < data.length; i++) {
@@ -68,38 +68,13 @@ class SerialAdapterXtermJS {
   }
 }
 
-async function buildFileMap() {
-  const data = await fetchJson<number[][]>(getFsRoot() + "map.json");
-
-  const fileMap = new Map<number, { p: number; s: number; l: number }>();
-  data.forEach((packData, packIndex) => {
-    let start = 0;
-    let index = 0;
-    const end = packData.length;
-    while (index < end) {
-      const hash = packData[index];
-      const size = packData[index + 1];
-
-      fileMap.set(hash, {
-        p: packIndex,
-        s: start,
-        l: size,
-      });
-
-      start += size;
-      index += 2;
-    }
-  });
-
-  return fileMap;
-}
-
 export async function bootV86(option: VMOption) {
+  fs9p.install();
+
   const initialStateBuffer = await fetchArrayBuffer(getStateFile());
   const biosBuffer = await fetchArrayBuffer(bios);
   const vgabiosBuffer = await fetchArrayBuffer(vgabios);
-
-  const fileMap = await buildFileMap();
+  const debianBuffer = await fetchArrayBuffer(gethddFile());
 
   const emulator = new V86Starter({
     bios: { buffer: biosBuffer },
@@ -110,21 +85,34 @@ export async function bootV86(option: VMOption) {
     initial_state: {
       buffer: initialStateBuffer,
     },
-    filesystem: {
-      // use_pack: {
-      //   prefix_length: 2,
-      //   idb_key: "server_box_fs",
-      // },
-      use_pack: {
-        fileMap,
-      },
-      baseurl: getFsRoot(),
+    hda: {
+      buffer: debianBuffer,
     },
+    filesystem: fs9p,
     autostart: true,
+    // Mouse disabled, undo if you want to interact with the screen
+    disable_mouse: true,
+    // Keyboard disabled, undo if you want to type in screen
+    disable_keyboard: true,
+    // Disable sound
+    disable_speaker: true,
     ...option,
   });
 
   window.emulator = emulator;
+  window.saveState = async () => {
+    const ab = await emulator.save_state();
+    const name = "linux-state.bin";
+    var blob = new Blob([ab]);
+
+    var a = document.createElement("a");
+    a["download"] = name;
+    a.href = window.URL.createObjectURL(blob);
+    a.dataset["downloadurl"] = ["application/octet-stream", a["download"], a.href].join(":");
+
+    a.click();
+    window.URL.revokeObjectURL(a.src);
+  };
   emulator.serial_adapter = new SerialAdapterXtermJS(document.getElementById("terminal"), emulator.bus);
   const fitAddon = new FitAddon();
   const unicode11Addon = new Unicode11Addon();

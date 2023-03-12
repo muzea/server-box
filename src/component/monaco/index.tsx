@@ -19,7 +19,7 @@ function getModel(monaco: MonacoType, value: string, language: string, path: str
   return prev || monaco.editor.createModel(value, language, uri);
 }
 
-const Readme = `致力于提供一个可交互的在线 Linux VM
+const Readme = `Aiming to provide an interactive online Linux VM
 `;
 
 export default function Monaco() {

@@ -20,7 +20,7 @@ const isLocal = query.local && true;
 
 const DEBIAN_ROOT = isLocal ? Local : CDN_ROOT;
 
-function gethddFile() {
+function getHddFile() {
   return DEBIAN_ROOT + "linux.img";
 }
 
@@ -74,7 +74,7 @@ export async function bootV86(option: VMOption) {
   const initialStateBuffer = await fetchArrayBuffer(getStateFile());
   const biosBuffer = await fetchArrayBuffer(bios);
   const vgabiosBuffer = await fetchArrayBuffer(vgabios);
-  const debianBuffer = await fetchArrayBuffer(gethddFile());
+  const debianBuffer = await fetchArrayBuffer(getHddFile());
 
   const emulator = new V86Starter({
     bios: { buffer: biosBuffer },

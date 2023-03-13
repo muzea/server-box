@@ -82,9 +82,9 @@ export async function bootV86(option: VMOption) {
     wasm_path: v86Wasm,
     vga_memory_size: 8 * 1024 * 1024,
     memory_size: 512 * 1024 * 1024,
-    initial_state: {
-      buffer: initialStateBuffer,
-    },
+    // initial_state: {
+    //   buffer: initialStateBuffer,
+    // },
     hda: {
       buffer: debianBuffer,
     },

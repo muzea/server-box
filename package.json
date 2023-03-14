@@ -28,7 +28,7 @@
     "@radix-ui/react-primitive": "^1.0.1",
     "@vitejs/plugin-react": "^3.1.0",
     "@vscode/codicons": "^0.0.32",
-    "@woodenfish/libv86": "0.0.2-alpha.16",
+    "@woodenfish/libv86": "0.0.2-alpha.17",
     "@woodenfish/vscode-icon-map-seti": "^0.0.2",
     "antd": "^5.2.3",
     "classnames": "^2.3.2",

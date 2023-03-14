@@ -816,10 +816,10 @@
   resolved "https://registry.npmmirror.com/@vscode/codicons/-/codicons-0.0.32.tgz#9e27de90d509c69762b073719ba3bf46c3cd2530"
   integrity sha512-3lgSTWhAzzWN/EPURoY4ZDBEA80OPmnaknNujA3qnI4Iu7AONWd9xF3iE4L+4prIe8E3TUnLQ4pxoaFTEEZNwg==
 
-"@woodenfish/libv86@0.0.2-alpha.16":
-  version "0.0.2-alpha.16"
-  resolved "https://registry.npmmirror.com/@woodenfish/libv86/-/libv86-0.0.2-alpha.16.tgz#53c9a93f42110c9b9fe097c0e8e0ea360c64295a"
-  integrity sha512-BfRV0BVPsJURjaISWMoMD+2KAL4S4oO6PSvorBXvtzGf60bX87c3TY77g9U7FgMwiC5k9MyvHMwzPIWuNFdFXA==
+"@woodenfish/libv86@0.0.2-alpha.17":
+  version "0.0.2-alpha.17"
+  resolved "https://registry.yarnpkg.com/@woodenfish/libv86/-/libv86-0.0.2-alpha.17.tgz#e3be69fd65dcca435b9f2247d2d382b6d5b2e1d8"
+  integrity sha512-mOKMvo4be0j0l4EZ/aOfL7b+Tb9vi145O5YYjiUnoIYbO3Vi3PLBm3Nx3VyrMF8nlJIKAZRXxaOAIjEnoTJIdg==
 
 "@woodenfish/vscode-icon-map-seti@^0.0.2":
   version "0.0.2"

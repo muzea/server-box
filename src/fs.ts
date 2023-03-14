@@ -24,6 +24,7 @@ const fs9p = {
   sh,
   Path,
   Buffer,
+  fsp: fs.promises,
 };
 
 export default fs9p;

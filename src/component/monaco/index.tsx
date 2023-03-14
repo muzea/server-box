@@ -5,9 +5,10 @@ import fileIdMap from "@woodenfish/vscode-icon-map-seti";
 import loader from "@monaco-editor/loader";
 import { useTabs } from "../../state/tabs";
 import * as styles from "./style.module.less";
-import { getGlobalFs, getInodePath } from "../../state/fs";
+import { getInodePath, readFile, writeFile } from "../../state/fs";
 import { getExtWithDot, getName } from "../../util/path";
 import { decodeFromBytes, encodeToBytes } from "../../util/utf8";
+import { StartFileId } from "../../const";
 
 loader.config({ paths: { vs: "https://gw.alipayobjects.com/os/lib/monaco-editor/0.36.1/min/vs" } });
 
@@ -42,7 +43,8 @@ export default function Monaco() {
         if (model && model !== defalutModel) {
           const idx = model.uri.path.substring(1);
           const buffer = encodeToBytes(model.getValue());
-          getGlobalFs().Write(parseInt(idx, 10), 0, buffer.length, buffer);
+
+          writeFile(idx, buffer);
         }
       });
     });
@@ -55,7 +57,7 @@ export default function Monaco() {
         console.error("tabs change but editor not ready");
         return;
       }
-      if (state.currentIdx >= 0) {
+      if (state.currentIdx !== StartFileId) {
         console.log("handleFileSelect", state.currentIdx);
 
         const uri = monaco.Uri.parse(String(state.currentIdx));
@@ -65,14 +67,11 @@ export default function Monaco() {
           editorRef.current?.setModel(prev);
           return;
         }
-        const fs = getGlobalFs();
-        const inode = fs.GetInode(state.currentIdx);
-        const path = getInodePath(state.currentIdx);
-        fs.Read(state.currentIdx, 0, inode.size).then((data) => {
+        readFile(state.currentIdx).then((data) => {
           const model = getModel(
             monaco,
-            data ? decodeFromBytes(data) : "",
-            fileIdMap.exts[getExtWithDot(getName(path))],
+            data ? decodeFromBytes(new Uint8Array(data)) : "",
+            fileIdMap.exts[getExtWithDot(getName(getInodePath(state.currentIdx)))],
             String(state.currentIdx)
           );
 

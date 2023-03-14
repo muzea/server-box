@@ -3,27 +3,28 @@ import { create } from "zustand";
 import fileIdMap from "@woodenfish/vscode-icon-map-seti";
 import { getExtWithDot, getName } from "../util/path";
 import { getInodePath } from "./fs";
+import { StartFileId } from "../const";
 
 export interface TabItem {
   fileName: string;
   filePath: string;
-  idx: number;
+  idx: string;
   languageId: string;
 }
 
 export interface TabsState {
-  currentIdx: number;
+  currentIdx: string;
   list: TabItem[];
-  add(idx: number): void;
-  remove(idx: number): void;
-  select(idx: number): void;
+  add(idx: string): void;
+  remove(idx: string): void;
+  select(idx: string): void;
 }
 
 export const useTabs = create<TabsState>((set, get) => {
   return {
-    currentIdx: -1,
+    currentIdx: StartFileId,
     list: [],
-    add(idx: number) {
+    add(idx: string) {
       const checkIndex = get().list.findIndex((it) => it.idx === idx);
       if (checkIndex >= 0) {
         return set({ currentIdx: get().list[checkIndex].idx });
@@ -39,17 +40,17 @@ export const useTabs = create<TabsState>((set, get) => {
       set((prev) => {
         const nextList = prev.list.concat(item);
         return {
-          currentIdx: prev.currentIdx === -1 ? idx : prev.currentIdx,
+          currentIdx: prev.currentIdx === StartFileId ? idx : prev.currentIdx,
           list: nextList,
         };
       });
     },
-    remove(idx: number) {
+    remove(idx: string) {
       if (idx !== get().currentIdx) {
         return set({ list: get().list.filter((it) => it.idx !== idx) });
       }
     },
-    select(idx: number) {
+    select(idx: string) {
       const checkIndex = get().list.findIndex((it) => it.idx === idx);
       if (checkIndex >= 0) {
         return set({ currentIdx: get().list[checkIndex].idx });

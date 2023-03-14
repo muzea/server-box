@@ -1,1 +1,2 @@
-export const ProjectRoot = '/project'
+export const ProjectRoot = "/";
+export const StartFileId = "StartFileId";

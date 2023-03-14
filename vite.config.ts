@@ -23,6 +23,7 @@ export default defineConfig({
         },
       ],
       plugins: [
+        // @ts-ignore
         externalGlobals(externals),
         // visualizer({ emitFile: true, open: true }),
       ],

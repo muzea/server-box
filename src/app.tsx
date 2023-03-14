@@ -1,16 +1,24 @@
 import { useEffect, useRef } from "react";
 import { bootV86 } from "./boot";
 import { V86Starter } from "@woodenfish/libv86";
-import { saveGlobalFs, useFs } from "./state/fs";
+import { createFile, useFs, writeFile } from "./state/fs";
 import { encodeToBytes } from "./util/utf8";
 import Layout from "./component/layout";
 import { notification } from "antd";
+import fs9p from "./fs";
 
 function App() {
   const starter = useRef<Promise<V86Starter>>();
 
   useEffect(() => {
     if (!starter.current) {
+      fs9p.install();
+      // useFs.getState().SyncWith9p();
+
+      // createFile("/", "test.py", "# test");
+      // //@ts-ignore
+      // starter.current = true;
+      // return;
       notification.info({
         message: "The debian image is a bit large and will take a long time to load for the first time",
         placement: "bottomRight",

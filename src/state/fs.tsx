@@ -5,6 +5,7 @@ import { ProjectRoot } from "../const";
 import { getName } from "../util/path";
 import * as styles from "./fs.module.less";
 import fs9p from "../fs";
+import { debounce } from "../util/fn";
 
 /**
  * fs 状态是同步文件变化来触发 react 更新
@@ -27,7 +28,7 @@ async function buildFileTree(filePath: string): Promise<DataNode> {
   fileInfoMap.set(nodeInfo.node, filePath);
   if (nodeInfo.isDirectory()) {
     // @ts-ignore
-    const result = await fsp.readdir(ProjectRoot);
+    const result = await fsp.readdir(filePath);
 
     const children: DataNode[] = [];
     for (const name of result) {
@@ -79,12 +80,17 @@ export const useFs = create<FsState>((set) => {
   return {
     tree: [] as DataNode[],
     SyncWith9p() {
-      // TODO 改为订阅目录变化
-      buildFileTree(ProjectRoot).then((list) => {
-        set({
-          tree: [list],
+      const fn = debounce(() => {
+        buildFileTree(ProjectRoot).then((list) => {
+          set({
+            tree: [list],
+          });
         });
       });
+
+      fn();
+
+      fs9p.fs.watch(ProjectRoot, { recursive: true }, fn);
     },
   };
 });

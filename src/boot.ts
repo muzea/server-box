@@ -7,8 +7,9 @@ import vgabios from "@woodenfish/libv86/bios/vgabios.bin?url";
 
 import qs from "qs";
 import { fetchArrayBuffer, fetchJson } from "./util/cache";
-import fs9p from "./fs";
-import { SerialAdapterXtermJS } from "./xterm";
+import fs9p from "./v86-extend/fs";
+import { SerialAdapterXtermJS } from "./v86-extend/xterm";
+import NetworkAdapter from "./v86-extend/network";
 
 const CDN_ROOT = "https://misaka.wooden.fish/";
 // const Local = "/temp_fs/debian-10-slim/";
@@ -51,6 +52,7 @@ export async function bootV86(option: VMOption) {
     disable_keyboard: true,
     // Disable sound
     disable_speaker: true,
+    network_adapter: NetworkAdapter,
     ...option,
   };
 

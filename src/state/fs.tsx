@@ -1,10 +1,8 @@
 import { create } from "zustand";
-import type { DataNode, DirectoryTreeProps } from "antd/es/tree";
-import type { FS } from "../vm";
+import type { DataNode } from "antd/es/tree";
 import { ProjectRoot } from "../const";
-import { getName } from "../util/path";
 import * as styles from "./fs.module.less";
-import fs9p from "../fs";
+import fs9p from "../v86-extend/fs";
 import { debounce } from "../util/fn";
 
 /**

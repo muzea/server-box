@@ -1,8 +1,7 @@
 import { useEffect, useRef } from "react";
 import { bootV86 } from "./boot";
 import { V86Starter } from "@woodenfish/libv86";
-import { createFile, useFs, writeFile } from "./state/fs";
-import { encodeToBytes } from "./util/utf8";
+import { useFs } from "./state/fs";
 import Layout from "./component/layout";
 import { notification } from "antd";
 
@@ -11,7 +10,6 @@ function App() {
 
   useEffect(() => {
     if (!starter.current) {
-      // createFile("/", "test.py", "# test");
       notification.info({
         message: "The debian image is a bit large and will take a long time to load for the first time",
         placement: "bottomRight",

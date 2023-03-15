@@ -68,12 +68,12 @@ export async function readFile(idx: string): Promise<ArrayBuffer> {
   return await fs9p.fsp.readFile(fileInfoMap.get(idx)!);
 }
 
-export async function writeFile(idx: string, data: string | ArrayBuffer): Promise<void> {
-  return await fs9p.fsp.writeFile(fileInfoMap.get(idx)!, data as any);
+export async function writeFile(idx: string, data: ArrayBuffer): Promise<void> {
+  return await fs9p.fsp.writeFile(fileInfoMap.get(idx)!, new fs9p.Buffer(data));
 }
 
-export async function createFile(path: string, name: string, data: string | ArrayBuffer): Promise<void> {
-  return await fs9p.fsp.writeFile(fs9p.Path.join(path, name), data as any);
+export async function createFile(path: string, name: string, data: ArrayBuffer): Promise<void> {
+  return await fs9p.fsp.writeFile(fs9p.Path.join(path, name), new fs9p.Buffer(data));
 }
 
 export const useFs = create<FsState>((set) => {

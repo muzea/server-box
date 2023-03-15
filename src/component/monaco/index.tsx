@@ -21,6 +21,18 @@ function getModel(monaco: MonacoType, value: string, language: string, path: str
 }
 
 const Readme = `Aiming to provide an interactive online Linux VM
+
+The default image size is 230M and may take several minutes to load for the first time.
+
+The sidebar on the left will show you the files in the /mnt directory. You can use touch to create files and mkdir to create directories in the terminal at the bottom, and the file tree on the left will automatically synchronize with the changes in response.
+
+The system has gcc/python built in, so you can create a .c/.py file and run them.
+
+
+Known issues
+
+- gcc compilation results can not work under /mnt (run the .out file will cause system crashes), you need to mv the .out file to /tmp for execution
+- df does not currently work, fs does not currently implement stats correctly (this type of operation also causes system crashes)
 `;
 
 export default function Monaco() {

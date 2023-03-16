@@ -22,6 +22,10 @@ function getModel(monaco: MonacoType, value: string, language: string, path: str
 
 const Readme = `Aiming to provide an interactive online Linux VM
 
+You can view the project source code here 
+https://github.com/muzea/server-box
+
+
 The default image size is 230M and may take several minutes to load for the first time.
 
 The sidebar on the left will show you the files in the /mnt directory. You can use touch to create files and mkdir to create directories in the terminal at the bottom, and the file tree on the left will automatically synchronize with the changes in response.

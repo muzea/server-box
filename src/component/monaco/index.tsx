@@ -26,6 +26,8 @@ The default image size is 230M and may take several minutes to load for the firs
 
 The sidebar on the left will show you the files in the /mnt directory. You can use touch to create files and mkdir to create directories in the terminal at the bottom, and the file tree on the left will automatically synchronize with the changes in response.
 
+You can use Ctrl-s save file change to disk.
+
 The system has gcc/python built in, so you can create a .c/.py file and run them.
 
 
@@ -46,6 +48,7 @@ export default function Monaco() {
       const editor = monaco.editor.create(dom, {
         model: defalutModel,
         theme: "vs-dark",
+        wordWrap: "on",
       });
 
       editorRef.current = editor;

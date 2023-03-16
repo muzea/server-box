@@ -1,5 +1,10 @@
 Aiming to provide an interactive online Linux VM
 
+
+![image](https://user-images.githubusercontent.com/7843281/225645362-bb02dd20-8ae4-4c71-be1b-739c0dc8d82f.png)
+![image](https://user-images.githubusercontent.com/7843281/225645451-14a4976d-aa3b-4c69-9138-a55b2387087d.png)
+
+
 ## Introduction
 
 This project uses [v86](https://github.com/copy/v86) to run a debian os in the browser, providing a monaco editor to edit files in linux vm more conveniently (of course you can also use vim/nano in Linux to edit files directly).

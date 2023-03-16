@@ -1,7 +1,9 @@
-// https://github.com/onomondo/tcp-packet/blob/master/index.js
-// TODO tcp
-
 // Copy from https://github.com/mafintosh/ip-packet/blob/master/index.js
+// https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers
+export enum Protocol {
+  TCP = 6,
+  UDP = 17,
+}
 
 interface Options {
   allowNullChecksum: boolean;
@@ -11,7 +13,7 @@ const opts: Options = {
   allowNullChecksum: true,
 };
 
-interface Packet {
+export interface Packet {
   version: number;
   ihl: number;
   dscp: number;
@@ -25,10 +27,10 @@ interface Packet {
   checksum: number;
   sourceIp: string;
   destinationIp: string;
-  data: ArrayBuffer;
+  data: Uint8Array;
 }
 
-function encode(packet: Packet) {
+function encode(packet: Omit<Packet, "checksum" | "length">) {
   let buf = new ArrayBuffer(encodingLength(packet));
   let offset = 0;
 
@@ -58,13 +60,14 @@ function encode(packet: Packet) {
   // buf.writeUInt16BE(checksum(buf, offset, offset + 20), offset + 10);
   view.setUint16(offset + 10, checksum(view, offset, offset + 20), false);
   // packet.data.copy(buf, offset + 20);
-  new Uint8Array(buf).set(new Uint8Array(packet.data), 20);
-  return buf;
+  const ret = new Uint8Array(buf);
+  ret.set(new Uint8Array(packet.data), 20);
+  return ret;
 }
 
-function decode(buf: Uint8Array) {
+function decode(buf: Uint8Array): Packet {
   let offset = 0;
-  const view = new DataView(buf.buffer.slice(buf.byteOffset, buf.byteLength + buf.byteOffset));
+  const view = new DataView(buf.buffer, buf.byteOffset);
   let version = view.getUint8(offset) >> 4;
 
   if (version !== 4) {
@@ -98,11 +101,11 @@ function decode(buf: Uint8Array) {
     checksum: decodedChecksum,
     sourceIp: decodeIp(view, offset + 12),
     destinationIp: decodeIp(view, offset + 16),
-    data: buf.slice(offset + 20, offset + length),
+    data: buf.subarray(offset + 20, offset + length),
   };
 }
 
-function encodingLength(packet: Packet) {
+function encodingLength(packet: Omit<Packet, "checksum" | "length">) {
   return 20 + packet.data.byteLength;
 }
 

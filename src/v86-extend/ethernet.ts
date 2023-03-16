@@ -1,7 +1,7 @@
 // https://en.wikipedia.org/wiki/Ethernet_frame
 // https://en.wikipedia.org/wiki/EtherType#Values
 
-interface Frame {
+export interface Frame {
   dst: Uint8Array;
   src: Uint8Array;
   type: number;

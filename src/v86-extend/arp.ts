@@ -2,7 +2,8 @@
 // https://datatracker.ietf.org/doc/html/rfc2390
 
 const FakeMac = [0x00, 0x50, 0x56, 0xef, 0x7b, 0xe0];
-export const FakeIpBuff = new Uint8Array([192, 168, 1, 1]);
+export const FakeIpBuff = new Uint8Array([192, 168, 1, 100]);
+export const FakeIpString = "192.168.1.100";
 export const FakeMacBuff = new Uint8Array(FakeMac);
 
 interface Arp {

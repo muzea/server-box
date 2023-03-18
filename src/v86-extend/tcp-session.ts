@@ -1,7 +1,8 @@
-import * as Ethernet from "./ethernet";
+import EventEmitter from "eventemitter3";
 import * as IP from "./ip";
-import * as ARP from "./arp";
 import * as TCP from "./tcp";
+import * as bus from "./bus";
+import * as utf8 from "../util/utf8";
 
 let tcpRespCount = 0x7777;
 
@@ -9,6 +10,7 @@ let tcpRespCount = 0x7777;
 // https://en.wikipedia.org/wiki/Transmission_Control_Protocol#Protocol_operation
 export enum State {
   LISTEN = 0,
+  SYN_SENT = 1,
   SYN_RECEIVED = 2,
   ESTABLISHED = 3,
   FIN_WAIT_1 = 4,
@@ -20,60 +22,171 @@ export enum State {
   CLOSED = 10,
 }
 
-export class TCPSession {
+export class TCPServerSocket extends EventEmitter {
   state: State;
-  frame: Ethernet.Frame;
-  ip: IP.Packet;
-  ethSend?: (dst: Uint8Array, src: Uint8Array, type: Ethernet.EtherType, data: Uint8Array) => void;
-  constructor(frame: Ethernet.Frame, ip: IP.Packet) {
+  lastRespCount: number;
+  clientPort: number;
+  clientIP: string;
+  serverPort: number;
+  constructor(clientPort: number, clientIP: string, serverPort: number) {
+    super();
     this.state = State.LISTEN;
-    this.frame = frame;
-    this.ip = ip;
+    this.lastRespCount = 0;
+    this.clientPort = clientPort;
+    this.clientIP = clientIP;
+    this.serverPort = serverPort;
   }
 
-  linkToEth(ethSend: any) {
-    this.ethSend = ethSend;
-  }
   handleData(tcp: TCP.Packet) {
-    if (tcp.syn && this.state === State.LISTEN) {
-      this.state = State.ESTABLISHED;
+    if (this.state === State.LISTEN) {
+      if (tcp.syn) {
+        this.state = State.SYN_RECEIVED;
+        this.lastRespCount = tcpRespCount++;
+        const tcpResp = TCP.encode(
+          new Uint8Array(0),
+          tcp.destinationPort,
+          tcp.sourcePort,
+          this.lastRespCount,
+          tcp.sequenceNumber,
+          TCP.Flags.ACK | TCP.Flags.SYN
+        );
 
-      const tcpResp = TCP.encode(
-        new Uint8Array(0),
-        tcp.destinationPort,
-        tcp.sourcePort,
-        tcpRespCount++,
-        tcp.sequenceNumber,
-        TCP.Flags.ACK | TCP.Flags.SYN
-      );
+        bus.sendIPPacketToVM(this.clientIP, tcpResp);
+        if (tcp.data.byteLength) {
+          this.emit("data", tcp.data);
+        }
+      } else {
+        console.error("tcp data error", tcp);
+      }
 
-      const ip = IP.encode({
-        version: 4,
-        ihl: 5,
-        dscp: 0,
-        ecn: 0,
-        identification: 0,
-        flags: 0,
-        fragmentOffset: 0,
-        ttl: 40,
-        protocol: IP.Protocol.TCP,
-        sourceIp: this.ip.destinationIp,
-        destinationIp: this.ip.sourceIp,
-        data: tcpResp,
-      });
-      this.ethSend!(this.frame.src, this.frame.dst, Ethernet.EtherType.IPv4, ip);
+      return;
+    }
+
+    if (this.state === State.SYN_RECEIVED) {
+      if (tcp.ack && tcp.acknowledgmentNumber === this.lastRespCount) {
+        this.state = State.ESTABLISHED;
+        this.lastRespCount = tcpRespCount++;
+        const tcpResp = TCP.encode(
+          new Uint8Array(0),
+          tcp.destinationPort,
+          tcp.sourcePort,
+          this.lastRespCount,
+          tcp.sequenceNumber,
+          TCP.Flags.ACK
+        );
+
+        bus.sendIPPacketToVM(this.clientIP, tcpResp);
+      } else {
+        console.error("tcp ESTABLISHED error", tcp);
+      }
+
+      return;
+    }
+
+    if (this.state === State.ESTABLISHED) {
+      if (tcp.fin) {
+        this.state = State.CLOSE_WAIT;
+        this.lastRespCount = tcpRespCount++;
+        const tcpResp = TCP.encode(
+          new Uint8Array(0),
+          tcp.destinationPort,
+          tcp.sourcePort,
+          this.lastRespCount,
+          tcp.sequenceNumber,
+          TCP.Flags.ACK
+        );
+
+        this.emit("end");
+      } else if (tcp.data.byteLength) {
+        this.emit("data", tcp.data);
+      } else {
+        console.error("tcp data error", tcp);
+      }
+
+      return;
+    }
+
+    if (this.state === State.LAST_ACK) {
+      if (tcp.ack && tcp.acknowledgmentNumber === this.lastRespCount) {
+        this.state = State.CLOSED;
+        this.emit("close");
+      } else {
+        console.error("tcp close error", tcp);
+      }
+
       return;
     }
   }
+
+  close() {
+    if (this.state === State.CLOSE_WAIT) {
+      this.state = State.LAST_ACK;
+      this.lastRespCount = tcpRespCount++;
+
+      const tcpResp = TCP.encode(
+        new Uint8Array(0),
+        this.serverPort,
+        this.clientPort,
+        this.lastRespCount,
+        0,
+        TCP.Flags.FIN
+      );
+
+      bus.sendIPPacketToVM(this.clientIP, tcpResp);
+    }
+  }
+
+  write(data: string | Uint8Array) {
+    const payload = typeof data === "string" ? utf8.encodeToBytes(data) : data;
+
+    this.lastRespCount = tcpRespCount++;
+    const tcpResp = TCP.encode(payload, this.serverPort, this.clientPort, this.lastRespCount, 0, 0);
+
+    bus.sendIPPacketToVM(this.clientIP, tcpResp);
+  }
 }
 
-const pool = new Map<string, TCPSession>();
+const serverPool = new Map<number, TCPServer>();
 
-export function getTCPSession(frame: Ethernet.Frame, ip: IP.Packet, tcp: TCP.Packet) {
-  const key = `${tcp.sourcePort.toString(32)}.${tcp.destinationPort.toString(32)}.${ip.sourceIp}.${ip.destinationIp}`;
-  if (!pool.has(key)) {
-    const session = new TCPSession(frame, ip);
-    pool.set(key, session);
+interface TCPServerOption {
+  port: number;
+}
+
+class TCPServer extends EventEmitter {
+  state: State;
+  // to simplify the implementation
+  // it is assumed that the requests come from within the VM, so the key only uses the client port
+  connectionMap: Map<number, TCPServerSocket>;
+  constructor() {
+    super();
+    this.state = State.LISTEN;
+    this.connectionMap = new Map();
   }
-  return pool.get(key)!;
+  listen(options: TCPServerOption, callback: () => void) {
+    serverPool.set(options.port, this);
+    if (typeof callback === "function") callback();
+  }
+  handleData(ip: IP.Packet, tcp: TCP.Packet) {
+    if (!this.connectionMap.has(tcp.sourcePort)) {
+      const socket = new TCPServerSocket(tcp.sourcePort, ip.sourceIp, tcp.destinationPort);
+      this.connectionMap.set(tcp.sourcePort, socket);
+    }
+    this.connectionMap.get(tcp.sourcePort)!.handleData(tcp);
+  }
+}
+
+export function createServer(): TCPServer {
+  const server = new TCPServer();
+
+  return server;
+}
+
+export function handleData(ip: IP.Packet, tcp: TCP.Packet) {
+  const port = tcp.destinationPort;
+  const server = serverPool.get(port);
+  if (server) {
+    server.handleData(ip, tcp);
+  } else {
+    console.error("cannot find server to handle tcp data", tcp);
+  }
 }

@@ -32,6 +32,7 @@
     "@woodenfish/vscode-icon-map-seti": "^0.0.2",
     "antd": "^5.2.3",
     "classnames": "^2.3.2",
+    "eventemitter3": "^5.0.0",
     "filer": "^1.4.1",
     "lodash": "^4.17.21",
     "normalize.css": "^8.0.1",

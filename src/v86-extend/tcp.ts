@@ -21,7 +21,9 @@ export function encode(
   flags: number
 ): Uint8Array {
   const dataLength = data ? data.length : 0;
-  const packet = new Uint8Array(20 + dataLength);
+  const len = 20 + dataLength;
+  const buff = new ArrayBuffer(len + (len % 2));
+  const packet = new Uint8Array(buff, 0, len);
   const view = new DataView(packet.buffer, packet.byteOffset);
   packet[0] = sourcePort >> 8;
   packet[1] = sourcePort & 0xff;
@@ -50,6 +52,24 @@ export function encode(
   // packet[19] = 0;
   packet.set(data, 20);
   return packet;
+}
+
+export function updateChecksum(buff: Uint8Array, pseudoHeader: Uint8Array) {
+  let sum = 0;
+  const pseudoView = new DataView(pseudoHeader.buffer, pseudoHeader.byteOffset);
+  const buffView = new DataView(buff.buffer, buff.byteOffset);
+
+  for (let offset = 0; offset < pseudoHeader.byteLength; offset += 2) sum += pseudoView.getUint16(offset, false);
+  for (let offset = 0; offset < buffView.byteLength; offset += 2) sum += buffView.getUint16(offset, false);
+
+  while (true) {
+    const carry = sum >> 16;
+    if (!carry) break;
+    sum = (sum & 0xffff) + carry;
+  }
+  const checksum = ~sum & 0xffff;
+
+  buffView.setUint16(16, checksum);
 }
 
 // https://www.iana.org/assignments/tcp-parameters/tcp-parameters.xhtml#tcp-parameters-1

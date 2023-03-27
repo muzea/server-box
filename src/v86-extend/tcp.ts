@@ -18,10 +18,25 @@ export function encode(
   destinationPort: number,
   sequenceNumber: number,
   acknowledgmentNumber: number,
-  flags: number
+  flags: number,
+  options: Option[]
 ): Uint8Array {
-  const dataLength = data ? data.length : 0;
-  const len = 20 + dataLength;
+  const dataLength = data ? data.byteLength : 0;
+
+  let optionsLength = 0;
+  for (const option of options) {
+    if (!option.data) {
+      optionsLength += 4;
+    } else {
+      const chunkLength = 2 + option.data.byteLength;
+      optionsLength += chunkLength;
+      if (chunkLength % 4) {
+        optionsLength += 4 - (chunkLength % 4);
+      }
+    }
+  }
+
+  const len = 20 + dataLength + optionsLength;
   const buff = new ArrayBuffer(len + (len % 2));
   const packet = new Uint8Array(buff, 0, len);
   const view = new DataView(packet.buffer, packet.byteOffset);
@@ -35,13 +50,13 @@ export function encode(
   view.setUint32(8, acknowledgmentNumber);
 
   // Data offset 4bit & Reserved 4bit
-  packet[12] = 0x50;
+  packet[12] = ((20 + optionsLength) / 4) << 4;
   // CWR ECE URG ACK PSH RST SYN FIN
   packet[13] = flags;
 
   // Window Size 16bit
-  packet[14] = 0xfa;
-  packet[15] = 0xf0;
+  packet[14] = 0x20;
+  packet[15] = 0x00;
 
   // Checksum 16bit
   // packet[16] = 0;
@@ -50,7 +65,28 @@ export function encode(
   // Urgent pointer 16bit
   // packet[18] = 0;
   // packet[19] = 0;
-  packet.set(data, 20);
+
+  let optionOffset = 20;
+  for (const option of options) {
+    const chunkLength = 2 + (option.data ? option.data.byteLength : 0);
+    while ((optionOffset + chunkLength) % 4) {
+      packet[optionOffset] = OptionKind.NOP;
+      ++optionOffset;
+    }
+
+    packet[optionOffset] = option.kind;
+    ++optionOffset;
+
+    packet[optionOffset] = option.data ? option.data.byteLength + 2 : 2;
+    ++optionOffset;
+
+    if (option.data) {
+      packet.set(option.data, optionOffset);
+      optionOffset += option.data.byteLength;
+    }
+  }
+
+  packet.set(data, 20 + optionsLength);
   return packet;
 }
 

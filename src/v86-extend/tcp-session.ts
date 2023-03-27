@@ -48,7 +48,8 @@ export class TCPServerSocket extends EventEmitter {
           tcp.sourcePort,
           this.lastRespCount,
           tcp.sequenceNumber,
-          TCP.Flags.ACK | TCP.Flags.SYN
+          TCP.Flags.ACK | TCP.Flags.SYN,
+          []
         );
 
         bus.sendIPPacketToVM(this.clientIP, tcpResp);
@@ -72,7 +73,8 @@ export class TCPServerSocket extends EventEmitter {
           tcp.sourcePort,
           this.lastRespCount,
           tcp.sequenceNumber,
-          TCP.Flags.ACK
+          TCP.Flags.ACK,
+          []
         );
 
         bus.sendIPPacketToVM(this.clientIP, tcpResp);
@@ -93,7 +95,8 @@ export class TCPServerSocket extends EventEmitter {
           tcp.sourcePort,
           this.lastRespCount,
           tcp.sequenceNumber,
-          TCP.Flags.ACK
+          TCP.Flags.ACK,
+          []
         );
 
         this.emit("end");
@@ -129,7 +132,8 @@ export class TCPServerSocket extends EventEmitter {
         this.clientPort,
         this.lastRespCount,
         0,
-        TCP.Flags.FIN
+        TCP.Flags.FIN,
+        []
       );
 
       bus.sendIPPacketToVM(this.clientIP, tcpResp);
@@ -140,7 +144,7 @@ export class TCPServerSocket extends EventEmitter {
     const payload = typeof data === "string" ? utf8.encodeToBytes(data) : data;
 
     this.lastRespCount = tcpRespCount++;
-    const tcpResp = TCP.encode(payload, this.serverPort, this.clientPort, this.lastRespCount, 0, 0);
+    const tcpResp = TCP.encode(payload, this.serverPort, this.clientPort, this.lastRespCount, 0, 0, []);
 
     bus.sendIPPacketToVM(this.clientIP, tcpResp);
   }

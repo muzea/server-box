@@ -830,10 +830,10 @@
   resolved "https://registry.npmjs.org/@vscode/codicons/-/codicons-0.0.32.tgz#9e27de90d509c69762b073719ba3bf46c3cd2530"
   integrity sha512-3lgSTWhAzzWN/EPURoY4ZDBEA80OPmnaknNujA3qnI4Iu7AONWd9xF3iE4L+4prIe8E3TUnLQ4pxoaFTEEZNwg==
 
-"@woodenfish/libv86@0.0.2-alpha.18":
-  version "0.0.2-alpha.18"
-  resolved "https://registry.npmjs.org/@woodenfish/libv86/-/libv86-0.0.2-alpha.18.tgz#e488d2b8a0972c610ff311b91530ae3e3107fee0"
-  integrity sha512-tEjR3fO7vbSaXBtH88GPgrmTehIPRIcE0SEAPwQrhMNaR7xdXwr4FaxWJUUKjppyUuWKciTPGnWoYVzP2TCGvA==
+"@woodenfish/libv86@0.0.2-alpha.21":
+  version "0.0.2-alpha.21"
+  resolved "https://registry.yarnpkg.com/@woodenfish/libv86/-/libv86-0.0.2-alpha.21.tgz#c79059f239b73e2c50d6f2775946b8279d1f23c6"
+  integrity sha512-q3TfnQ6KMf/qjcXUI+jw0JiyTUrhCkX4jfCnH9/WCIE6d7ITJyQq9mEOGXA0yY0u+5dz6KY1hrdIlQj7jDvKiQ==
 
 "@woodenfish/vscode-icon-map-seti@^0.0.2":
   version "0.0.2"

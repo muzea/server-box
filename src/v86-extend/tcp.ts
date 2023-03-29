@@ -109,15 +109,30 @@ export function updateChecksum(buff: Uint8Array, pseudoHeader: Uint8Array) {
 }
 
 // https://www.iana.org/assignments/tcp-parameters/tcp-parameters.xhtml#tcp-parameters-1
-enum OptionKind {
+export enum OptionKind {
   /**
-   * 	End of Option List
+   * End of Option List
    */
   EOL = 0,
   /**
-   * 	No-Operation
+   * No-Operation
    */
   NOP = 1,
+  /**
+   * Maximum Segment Size
+   * length 4
+   */
+  MSS = 2,
+  /**
+   * Window Scale
+   * length 3
+   */
+  WS = 3,
+  /**
+   * SACK Permitted
+   * length 2
+   */
+  SACK_PERM = 4,
 }
 
 interface Option {

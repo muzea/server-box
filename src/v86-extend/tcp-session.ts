@@ -47,9 +47,18 @@ export class TCPServerSocket extends EventEmitter {
           tcp.destinationPort,
           tcp.sourcePort,
           this.lastRespCount,
-          tcp.sequenceNumber,
+          tcp.sequenceNumber + 1,
           TCP.Flags.ACK | TCP.Flags.SYN,
-          []
+          [
+            {
+              kind: TCP.OptionKind.MSS,
+              data: new Uint8Array([0x05, 0xb4]),
+            },
+            {
+              kind: TCP.OptionKind.WS,
+              data: new Uint8Array([0x08]),
+            },
+          ]
         );
 
         bus.sendIPPacketToVM(this.clientIP, tcpResp);
@@ -64,7 +73,7 @@ export class TCPServerSocket extends EventEmitter {
     }
 
     if (this.state === State.SYN_RECEIVED) {
-      if (tcp.ack && tcp.acknowledgmentNumber === this.lastRespCount) {
+      if (tcp.ack && tcp.acknowledgmentNumber === this.lastRespCount + 1) {
         this.state = State.ESTABLISHED;
         this.lastRespCount = tcpRespCount++;
         const tcpResp = TCP.encode(
@@ -72,11 +81,13 @@ export class TCPServerSocket extends EventEmitter {
           tcp.destinationPort,
           tcp.sourcePort,
           this.lastRespCount,
-          tcp.sequenceNumber,
+          tcp.sequenceNumber + 1,
           TCP.Flags.ACK,
           []
         );
-
+        if (tcp.data.byteLength) {
+          this.emit("data", tcp.data);
+        }
         bus.sendIPPacketToVM(this.clientIP, tcpResp);
       } else {
         console.error("tcp ESTABLISHED error", tcp);
@@ -94,12 +105,17 @@ export class TCPServerSocket extends EventEmitter {
           tcp.destinationPort,
           tcp.sourcePort,
           this.lastRespCount,
-          tcp.sequenceNumber,
+          tcp.sequenceNumber + 1,
           TCP.Flags.ACK,
           []
         );
 
+        if (tcp.data.byteLength) {
+          this.emit("data", tcp.data);
+        }
         this.emit("end");
+
+        bus.sendIPPacketToVM(this.clientIP, tcpResp);
       } else if (tcp.data.byteLength) {
         this.emit("data", tcp.data);
       } else {
@@ -110,7 +126,7 @@ export class TCPServerSocket extends EventEmitter {
     }
 
     if (this.state === State.LAST_ACK) {
-      if (tcp.ack && tcp.acknowledgmentNumber === this.lastRespCount) {
+      if (tcp.ack && tcp.acknowledgmentNumber === this.lastRespCount + 1) {
         this.state = State.CLOSED;
         this.emit("close");
       } else {

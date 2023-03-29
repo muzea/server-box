@@ -23,7 +23,8 @@ export function setEthBus(bus: any) {
 const arpMap = new Map<string, Uint8Array>();
 
 export function updateARPMap(mac: Uint8Array, ip: string) {
-  arpMap.set(ip, mac);
+  // mac data must be stored at new buffer space
+  arpMap.set(ip, mac.slice());
 }
 
 export function sendEthernetFrameToVM(dst: Uint8Array, src: Uint8Array, type: Ethernet.EtherType, data: Uint8Array) {
@@ -69,7 +70,7 @@ export function sendIPPacketToVM(destinationIp: string, data: Uint8Array) {
     identification: ++count,
     flags: 0b010,
     fragmentOffset: 0,
-    ttl: 40,
+    ttl: 128,
     protocol: IP.Protocol.TCP,
     sourceIp: ARP.FakeIpString,
     destinationIp: destinationIp,

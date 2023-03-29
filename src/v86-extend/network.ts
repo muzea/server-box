@@ -38,7 +38,6 @@ export default function createNetworkAdapter(_bus: any) {
         case Ethernet.EtherType.ARP: {
           // ARP
           const arp = ARP.decode(frame.data);
-
           bus.updateARPMap(arp.SHA, arp.SPA.join("."));
           // return a fake data
           bus.sendEthernetFrameToVM(

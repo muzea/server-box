@@ -34,6 +34,7 @@
     "classnames": "^2.3.2",
     "eventemitter3": "^5.0.0",
     "filer": "^1.4.1",
+    "http-z": "^6.1.2",
     "lodash": "^4.17.21",
     "normalize.css": "^8.0.1",
     "qs": "^6.11.1",

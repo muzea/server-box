@@ -24,145 +24,235 @@ export enum State {
 
 export class TCPServerSocket extends EventEmitter {
   state: State;
-  lastRespCount: number;
+  nextSequenceNumber: number;
+  lastAck: number;
   clientPort: number;
   clientIP: string;
   serverPort: number;
   constructor(clientPort: number, clientIP: string, serverPort: number) {
     super();
     this.state = State.LISTEN;
-    this.lastRespCount = 0;
+    this.nextSequenceNumber = tcpRespCount++;
+    this.lastAck = 0;
     this.clientPort = clientPort;
     this.clientIP = clientIP;
     this.serverPort = serverPort;
   }
 
   handleData(tcp: TCP.Packet) {
-    if (this.state === State.LISTEN) {
-      if (tcp.syn) {
-        this.state = State.SYN_RECEIVED;
-        this.lastRespCount = tcpRespCount++;
-        const tcpResp = TCP.encode(
-          new Uint8Array(0),
-          tcp.destinationPort,
-          tcp.sourcePort,
-          this.lastRespCount,
-          tcp.sequenceNumber + 1,
-          TCP.Flags.ACK | TCP.Flags.SYN,
-          [
-            {
-              kind: TCP.OptionKind.MSS,
-              data: new Uint8Array([0x05, 0xb4]),
-            },
-            {
-              kind: TCP.OptionKind.WS,
-              data: new Uint8Array([0x08]),
-            },
-          ]
-        );
+    switch (this.state) {
+      case State.LISTEN: {
+        if (tcp.syn) {
+          this.state = State.SYN_RECEIVED;
+          this.lastAck = tcp.sequenceNumber + tcp.data.byteLength + 1;
+          const tcpResp = TCP.encode(
+            new Uint8Array(0),
+            tcp.destinationPort,
+            tcp.sourcePort,
+            this.nextSequenceNumber,
+            this.lastAck,
+            TCP.Flags.ACK | TCP.Flags.SYN,
+            [
+              {
+                kind: TCP.OptionKind.MSS,
+                data: new Uint8Array([0x05, 0xb4]),
+              },
+              {
+                kind: TCP.OptionKind.WS,
+                data: new Uint8Array([0x08]),
+              },
+            ]
+          );
 
-        bus.sendIPPacketToVM(this.clientIP, tcpResp);
-        if (tcp.data.byteLength) {
-          this.emit("data", tcp.data);
+          bus.sendIPPacketToVM(this.clientIP, tcpResp);
+          this.nextSequenceNumber++;
+          if (tcp.data.byteLength) {
+            this.emit("data", tcp.data);
+          }
+        } else {
+          console.error("tcp data error", tcp);
         }
-      } else {
-        console.error("tcp data error", tcp);
+        break;
       }
+      case State.SYN_RECEIVED: {
+        if (tcp.ack && tcp.acknowledgmentNumber === this.nextSequenceNumber) {
+          this.state = State.ESTABLISHED;
+          this.lastAck = tcp.sequenceNumber + tcp.data.byteLength;
+          const tcpResp = TCP.encode(
+            new Uint8Array(0),
+            tcp.destinationPort,
+            tcp.sourcePort,
+            this.nextSequenceNumber,
+            this.lastAck,
+            TCP.Flags.ACK,
+            []
+          );
+          if (tcp.data.byteLength) {
+            this.emit("data", tcp.data);
+          }
+          bus.sendIPPacketToVM(this.clientIP, tcpResp);
+        } else {
+          console.error("tcp ESTABLISHED error", tcp);
+        }
+        break;
+      }
+      case State.ESTABLISHED: {
+        if (tcp.fin) {
+          this.state = State.CLOSE_WAIT;
 
-      return;
-    }
+          if (tcp.data.byteLength) {
+            this.emit("data", tcp.data);
+          }
+          this.emit("end");
+        } else if (tcp.data.byteLength) {
+          this.emit("data", tcp.data);
+        } else if (tcp.rst) {
+          /**
+           * @TODO
+           */
+          return;
+        } else {
+          console.error("tcp data error", tcp);
+        }
 
-    if (this.state === State.SYN_RECEIVED) {
-      if (tcp.ack && tcp.acknowledgmentNumber === this.lastRespCount + 1) {
-        this.state = State.ESTABLISHED;
-        this.lastRespCount = tcpRespCount++;
+        this.lastAck = tcp.sequenceNumber + tcp.data.byteLength;
         const tcpResp = TCP.encode(
           new Uint8Array(0),
           tcp.destinationPort,
           tcp.sourcePort,
-          this.lastRespCount,
-          tcp.sequenceNumber + 1,
+          this.nextSequenceNumber,
+          this.lastAck,
           TCP.Flags.ACK,
           []
         );
-        if (tcp.data.byteLength) {
-          this.emit("data", tcp.data);
-        }
+
         bus.sendIPPacketToVM(this.clientIP, tcpResp);
-      } else {
-        console.error("tcp ESTABLISHED error", tcp);
+
+        if (tcp.psh) {
+          this.emit("PSH");
+        }
+
+        break;
       }
+      case State.FIN_WAIT_1: {
+        if (tcp.ack && tcp.acknowledgmentNumber === this.nextSequenceNumber) {
+          if (tcp.fin) {
+            this.state = State.TIME_WAIT;
+          } else {
+            this.state = State.FIN_WAIT_2;
+          }
+        }
 
-      return;
-    }
-
-    if (this.state === State.ESTABLISHED) {
-      if (tcp.fin) {
-        this.state = State.CLOSE_WAIT;
-        this.lastRespCount = tcpRespCount++;
+        this.lastAck = tcp.sequenceNumber + tcp.data.byteLength;
         const tcpResp = TCP.encode(
           new Uint8Array(0),
           tcp.destinationPort,
           tcp.sourcePort,
-          this.lastRespCount,
-          tcp.sequenceNumber + 1,
+          this.nextSequenceNumber,
+          this.lastAck,
           TCP.Flags.ACK,
           []
         );
 
-        if (tcp.data.byteLength) {
-          this.emit("data", tcp.data);
-        }
-        this.emit("end");
-
         bus.sendIPPacketToVM(this.clientIP, tcpResp);
-      } else if (tcp.data.byteLength) {
-        this.emit("data", tcp.data);
-      } else {
-        console.error("tcp data error", tcp);
+        break;
       }
+      case State.FIN_WAIT_2: {
+        if (tcp.acknowledgmentNumber === this.nextSequenceNumber) {
+          if (tcp.fin) {
+            this.state = State.TIME_WAIT;
 
-      return;
-    }
+            this.lastAck = tcp.sequenceNumber + tcp.data.byteLength;
+            const tcpResp = TCP.encode(
+              new Uint8Array(0),
+              tcp.destinationPort,
+              tcp.sourcePort,
+              this.nextSequenceNumber,
+              this.lastAck,
+              TCP.Flags.ACK,
+              []
+            );
 
-    if (this.state === State.LAST_ACK) {
-      if (tcp.ack && tcp.acknowledgmentNumber === this.lastRespCount + 1) {
-        this.state = State.CLOSED;
-        this.emit("close");
-      } else {
-        console.error("tcp close error", tcp);
+            bus.sendIPPacketToVM(this.clientIP, tcpResp);
+            this.removeAllListeners();
+          }
+        } else {
+          console.error("socket active close error");
+        }
+
+        break;
       }
+      case State.TIME_WAIT: {
+        console.error("socket active close error");
 
-      return;
+        break;
+      }
+      case State.LAST_ACK: {
+        if (tcp.ack && tcp.acknowledgmentNumber === this.nextSequenceNumber) {
+          this.state = State.CLOSED;
+          this.emit("close");
+          this.removeAllListeners();
+        } else {
+          console.error("tcp close error", tcp);
+        }
+        break;
+      }
     }
   }
 
   close() {
-    if (this.state === State.CLOSE_WAIT) {
-      this.state = State.LAST_ACK;
-      this.lastRespCount = tcpRespCount++;
+    switch (this.state) {
+      case State.CLOSE_WAIT: {
+        this.state = State.LAST_ACK;
 
-      const tcpResp = TCP.encode(
-        new Uint8Array(0),
-        this.serverPort,
-        this.clientPort,
-        this.lastRespCount,
-        0,
-        TCP.Flags.FIN,
-        []
-      );
+        const tcpResp = TCP.encode(
+          new Uint8Array(0),
+          this.serverPort,
+          this.clientPort,
+          this.nextSequenceNumber,
+          this.lastAck,
+          TCP.Flags.FIN | TCP.Flags.ACK,
+          []
+        );
 
-      bus.sendIPPacketToVM(this.clientIP, tcpResp);
+        bus.sendIPPacketToVM(this.clientIP, tcpResp);
+        break;
+      }
+      case State.ESTABLISHED: {
+        this.state = State.FIN_WAIT_1;
+
+        const tcpResp = TCP.encode(
+          new Uint8Array(0),
+          this.serverPort,
+          this.clientPort,
+          this.nextSequenceNumber,
+          this.lastAck,
+          TCP.Flags.FIN | TCP.Flags.ACK,
+          []
+        );
+
+        bus.sendIPPacketToVM(this.clientIP, tcpResp);
+        break;
+      }
     }
   }
 
   write(data: string | Uint8Array) {
     const payload = typeof data === "string" ? utf8.encodeToBytes(data) : data;
-
-    this.lastRespCount = tcpRespCount++;
-    const tcpResp = TCP.encode(payload, this.serverPort, this.clientPort, this.lastRespCount, 0, 0, []);
+    console.log("tcp resp data ", data);
+    const tcpResp = TCP.encode(
+      payload,
+      this.serverPort,
+      this.clientPort,
+      this.nextSequenceNumber,
+      this.lastAck,
+      TCP.Flags.PSH | TCP.Flags.ACK,
+      []
+    );
 
     bus.sendIPPacketToVM(this.clientIP, tcpResp);
+
+    this.nextSequenceNumber += payload.byteLength;
   }
 }
 
@@ -190,6 +280,7 @@ class TCPServer extends EventEmitter {
     if (!this.connectionMap.has(tcp.sourcePort)) {
       const socket = new TCPServerSocket(tcp.sourcePort, ip.sourceIp, tcp.destinationPort);
       this.connectionMap.set(tcp.sourcePort, socket);
+      this.emit("connection", socket);
     }
     this.connectionMap.get(tcp.sourcePort)!.handleData(tcp);
   }

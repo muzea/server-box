@@ -4,6 +4,7 @@ import * as ARP from "./arp";
 import * as TCP from "./tcp";
 import * as bus from "./bus";
 import * as TCPSession from "./tcp-session";
+import * as HTTP from "./http";
 
 export default function createNetworkAdapter(_bus: any) {
   bus.setEthBus(_bus);
@@ -16,15 +17,10 @@ export default function createNetworkAdapter(_bus: any) {
         case Ethernet.EtherType.IPv4: {
           // IPv4
           console.log("IPv4 send", bus.buffToHex(data));
-          console.log("Ethernet data", bus.buffToHex(frame.data));
           const packet = IP.decode(frame.data);
-          console.log("IPv4 decode", packet);
-          console.log("IP data", bus.buffToHex(packet.data));
           switch (packet.protocol) {
             case IP.Protocol.TCP: {
               const tcp = TCP.decode(packet.data);
-              console.log("tcp decode ", tcp);
-              console.log("TCP data", bus.buffToHex(tcp.data));
 
               TCPSession.handleData(packet, tcp);
               break;
@@ -76,22 +72,10 @@ export default function createNetworkAdapter(_bus: any) {
     }
   });
 
-  const server = TCPSession.createServer();
+  HTTP.createServer((request, response) => {
+    response.writeHead(200, { "Content-Type": "text/plain" });
+    response.end("Hello World\n");
+  }).listen(80);
 
-  server.on("connection", (c: TCPSession.TCPServerSocket) => {
-    // 'connection' listener.
-    console.log("client connected");
-    c.on("data", (data: Uint8Array) => {
-      console.log("client send data ", data);
-    });
-    c.on("end", () => {
-      console.log("client disconnected");
-    });
-    c.write("hello\r\n");
-  });
-
-  server.listen({ port: 80 }, () => {
-    console.log("server bound");
-  });
   return true;
 }

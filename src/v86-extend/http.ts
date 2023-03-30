@@ -78,8 +78,8 @@ class SimpleResponse {
   headers: httpz.HttpZHeader[];
   body: string;
 
-  connection: TCPSession.TCPServerSocket;
-  constructor(connection: TCPSession.TCPServerSocket) {
+  connection: TCPSession.TCPSocket;
+  constructor(connection: TCPSession.TCPSocket) {
     this.connection = connection;
     this.headers = [];
     this.body = "";
@@ -136,7 +136,7 @@ class SimpleServer {
   listen(port: number) {
     const server = TCPSession.createServer();
 
-    server.on("connection", (c: TCPSession.TCPServerSocket) => {
+    server.on("connection", (c: TCPSession.TCPSocket) => {
       const requestBuffer = new ArrayBuffer(4 * 1024);
       const uint8 = new Uint8Array(requestBuffer);
       let offset = 0;
@@ -174,4 +174,32 @@ class SimpleServer {
 
 export function createServer(fn: (req: httpz.HttpZRequestModel, resp: SimpleResponse) => void): SimpleServer {
   return new SimpleServer(fn);
+}
+
+/**
+ * @TODO url parse
+ * @param url now must be IP address
+ * @param options
+ * @param callback
+ */
+export function get(url: string, options: any, callback: () => void) {
+  const client = TCPSession.createClient();
+  let responeBuffer = new ArrayBuffer(4 * 1024);
+  let uint8 = new Uint8Array(responeBuffer);
+  let offset = 0;
+  client.connect(80, url, () => {
+    console.log("connected to server");
+    client.on("data", (data: Uint8Array) => {
+      uint8.set(data, offset);
+      offset += data.byteLength;
+    });
+
+    client.on("PSH", () => {
+      console.log("httpget respone\n", decodeFromBytes(new Uint8Array(responeBuffer, 0, offset)));
+    });
+    client.on("end", () => {
+      console.log("httpget respone\n", decodeFromBytes(new Uint8Array(responeBuffer, 0, offset)));
+    });
+    client.write("GET / HTTP/1.1\r\n\r\n");
+  });
 }

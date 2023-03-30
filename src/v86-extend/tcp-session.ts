@@ -22,21 +22,36 @@ export enum State {
   CLOSED = 10,
 }
 
-export class TCPServerSocket extends EventEmitter {
+export class TCPSocket extends EventEmitter {
   state: State;
   nextSequenceNumber: number;
   lastAck: number;
-  clientPort: number;
-  clientIP: string;
-  serverPort: number;
-  constructor(clientPort: number, clientIP: string, serverPort: number) {
+  remotePort: number;
+  remoteIP: string;
+  localPort: number;
+  constructor(remotePort: number, remoteIP: string, localPort: number) {
     super();
     this.state = State.LISTEN;
     this.nextSequenceNumber = tcpRespCount++;
     this.lastAck = 0;
-    this.clientPort = clientPort;
-    this.clientIP = clientIP;
-    this.serverPort = serverPort;
+    this.remotePort = remotePort;
+    this.remoteIP = remoteIP;
+    this.localPort = localPort;
+  }
+
+  syn() {
+    this.state = State.SYN_SENT;
+    const tcpResp = TCP.encode(
+      new Uint8Array(0),
+      this.localPort,
+      this.remotePort,
+      this.nextSequenceNumber,
+      this.lastAck,
+      TCP.Flags.SYN,
+      []
+    );
+    bus.sendIPPacketToVM(this.remoteIP, tcpResp);
+    this.nextSequenceNumber++;
   }
 
   handleData(tcp: TCP.Packet) {
@@ -64,11 +79,32 @@ export class TCPServerSocket extends EventEmitter {
             ]
           );
 
-          bus.sendIPPacketToVM(this.clientIP, tcpResp);
+          bus.sendIPPacketToVM(this.remoteIP, tcpResp);
           this.nextSequenceNumber++;
           if (tcp.data.byteLength) {
             this.emit("data", tcp.data);
           }
+        } else {
+          console.error("tcp data error", tcp);
+        }
+        break;
+      }
+      case State.SYN_SENT: {
+        if (tcp.syn && tcp.ack && tcp.acknowledgmentNumber === this.nextSequenceNumber) {
+          this.state = State.ESTABLISHED;
+          this.lastAck = tcp.sequenceNumber + tcp.data.byteLength + 1;
+          const tcpResp = TCP.encode(
+            new Uint8Array(0),
+            tcp.destinationPort,
+            tcp.sourcePort,
+            this.nextSequenceNumber,
+            this.lastAck,
+            TCP.Flags.ACK,
+            []
+          );
+
+          bus.sendIPPacketToVM(this.remoteIP, tcpResp);
+          this.emit("ESTABLISHED");
         } else {
           console.error("tcp data error", tcp);
         }
@@ -90,7 +126,7 @@ export class TCPServerSocket extends EventEmitter {
           if (tcp.data.byteLength) {
             this.emit("data", tcp.data);
           }
-          bus.sendIPPacketToVM(this.clientIP, tcpResp);
+          bus.sendIPPacketToVM(this.remoteIP, tcpResp);
         } else {
           console.error("tcp ESTABLISHED error", tcp);
         }
@@ -126,7 +162,7 @@ export class TCPServerSocket extends EventEmitter {
           []
         );
 
-        bus.sendIPPacketToVM(this.clientIP, tcpResp);
+        bus.sendIPPacketToVM(this.remoteIP, tcpResp);
 
         if (tcp.psh) {
           this.emit("PSH");
@@ -154,7 +190,7 @@ export class TCPServerSocket extends EventEmitter {
           []
         );
 
-        bus.sendIPPacketToVM(this.clientIP, tcpResp);
+        bus.sendIPPacketToVM(this.remoteIP, tcpResp);
         break;
       }
       case State.FIN_WAIT_2: {
@@ -173,7 +209,7 @@ export class TCPServerSocket extends EventEmitter {
               []
             );
 
-            bus.sendIPPacketToVM(this.clientIP, tcpResp);
+            bus.sendIPPacketToVM(this.remoteIP, tcpResp);
             this.removeAllListeners();
           }
         } else {
@@ -207,15 +243,15 @@ export class TCPServerSocket extends EventEmitter {
 
         const tcpResp = TCP.encode(
           new Uint8Array(0),
-          this.serverPort,
-          this.clientPort,
+          this.localPort,
+          this.remotePort,
           this.nextSequenceNumber,
           this.lastAck,
           TCP.Flags.FIN | TCP.Flags.ACK,
           []
         );
 
-        bus.sendIPPacketToVM(this.clientIP, tcpResp);
+        bus.sendIPPacketToVM(this.remoteIP, tcpResp);
         break;
       }
       case State.ESTABLISHED: {
@@ -223,15 +259,15 @@ export class TCPServerSocket extends EventEmitter {
 
         const tcpResp = TCP.encode(
           new Uint8Array(0),
-          this.serverPort,
-          this.clientPort,
+          this.localPort,
+          this.remotePort,
           this.nextSequenceNumber,
           this.lastAck,
           TCP.Flags.FIN | TCP.Flags.ACK,
           []
         );
 
-        bus.sendIPPacketToVM(this.clientIP, tcpResp);
+        bus.sendIPPacketToVM(this.remoteIP, tcpResp);
         break;
       }
     }
@@ -242,21 +278,22 @@ export class TCPServerSocket extends EventEmitter {
     console.log("tcp resp data ", data);
     const tcpResp = TCP.encode(
       payload,
-      this.serverPort,
-      this.clientPort,
+      this.localPort,
+      this.remotePort,
       this.nextSequenceNumber,
       this.lastAck,
       TCP.Flags.PSH | TCP.Flags.ACK,
       []
     );
 
-    bus.sendIPPacketToVM(this.clientIP, tcpResp);
+    bus.sendIPPacketToVM(this.remoteIP, tcpResp);
 
     this.nextSequenceNumber += payload.byteLength;
   }
 }
 
 const serverPool = new Map<number, TCPServer>();
+const clientPool = new Map<number, TCPSocket>();
 
 interface TCPServerOption {
   port: number;
@@ -266,7 +303,7 @@ class TCPServer extends EventEmitter {
   state: State;
   // to simplify the implementation
   // it is assumed that the requests come from within the VM, so the key only uses the client port
-  connectionMap: Map<number, TCPServerSocket>;
+  connectionMap: Map<number, TCPSocket>;
   constructor() {
     super();
     this.state = State.LISTEN;
@@ -278,11 +315,46 @@ class TCPServer extends EventEmitter {
   }
   handleData(ip: IP.Packet, tcp: TCP.Packet) {
     if (!this.connectionMap.has(tcp.sourcePort)) {
-      const socket = new TCPServerSocket(tcp.sourcePort, ip.sourceIp, tcp.destinationPort);
+      const socket = new TCPSocket(tcp.sourcePort, ip.sourceIp, tcp.destinationPort);
       this.connectionMap.set(tcp.sourcePort, socket);
       this.emit("connection", socket);
     }
     this.connectionMap.get(tcp.sourcePort)!.handleData(tcp);
+  }
+}
+
+let ClientPort = 10000;
+
+class TCPClient {
+  port: number;
+  socket?: TCPSocket;
+  constructor() {
+    this.port = ClientPort++;
+  }
+
+  connect(serverPort: number, serverAddress: string, callback: () => void) {
+    this.socket = new TCPSocket(serverPort, serverAddress, this.port);
+    clientPool.set(this.port, this.socket);
+    this.socket.on("ESTABLISHED", callback);
+
+    this.socket.syn();
+  }
+
+  write(data: string | Uint8Array) {
+    this.socket?.write(data);
+  }
+
+  on(eventName: string, callback: (...data: any[]) => void) {
+    this.socket?.on(eventName, callback);
+  }
+
+  removeAllListeners() {
+    this.socket?.removeAllListeners();
+  }
+
+  destroy() {
+    this.socket?.close();
+    this.socket?.removeAllListeners();
   }
 }
 
@@ -292,10 +364,19 @@ export function createServer(): TCPServer {
   return server;
 }
 
+export function createClient(): TCPClient {
+  const client = new TCPClient();
+
+  return client;
+}
+
 export function handleData(ip: IP.Packet, tcp: TCP.Packet) {
   const port = tcp.destinationPort;
   const server = serverPool.get(port);
-  if (server) {
+  const client = clientPool.get(port);
+  if (client) {
+    client.handleData(tcp);
+  } else if (server) {
     server.handleData(ip, tcp);
   } else {
     console.error("cannot find server to handle tcp data", tcp);

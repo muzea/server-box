@@ -77,5 +77,8 @@ export default function createNetworkAdapter(_bus: any) {
     response.end("Hello World\n");
   }).listen(80);
 
+  // @ts-ignore
+  window.httpget = HTTP.get;
+
   return true;
 }

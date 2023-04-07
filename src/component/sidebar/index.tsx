@@ -1,22 +1,8 @@
 import React, { useCallback } from "react";
-import { Tree, TreeProps } from "antd";
 import * as styles from "./style.module.less";
 import { useFs } from "../../state/fs";
-import FileTreeContextMenu from "../file-tree-context-menu";
+import FileTree, { FileItem } from "../file-tree";
 import { useTabs } from "../../state/tabs";
-
-const { DirectoryTree } = Tree;
-
-function FileTree() {
-  const fs = useFs();
-  const handleSelect = useCallback<NonNullable<TreeProps["onSelect"]>>((keys, info) => {
-    if (info.node.isLeaf) {
-      useTabs.getState().add(info.node.key as number);
-    }
-  }, []);
-
-  return <DirectoryTree defaultExpandAll treeData={fs.tree} onSelect={handleSelect} />;
-}
 
 export default function Sidebar() {
   const handleNewFile = useCallback(() => {}, []);
@@ -24,6 +10,14 @@ export default function Sidebar() {
   const handleRefreshFs = useCallback(() => {
     useFs.getState().SyncWith9p();
   }, []);
+
+  const handleSelect = useCallback((node: FileItem) => {
+    if (!node.isDirectory) {
+      useTabs.getState().add(node.id);
+    }
+  }, []);
+
+  const fs = useFs();
 
   return (
     <div className={styles.sidebar}>
@@ -35,9 +29,14 @@ export default function Sidebar() {
           </div>
         </div>
       </div>
-      <FileTreeContextMenu className={styles.fullContentMenu} onNewFile={handleNewFile} onNewFolder={handleNewFolder}>
-        <FileTree />
-      </FileTreeContextMenu>
+      <div className={styles.fullContentMenu}>
+        <FileTree
+          list={fs.tree}
+          onSelect={handleSelect}
+          onNewFile={handleNewFile}
+          onNewDirectory={handleNewFolder as any}
+        />
+      </div>
     </div>
   );
 }

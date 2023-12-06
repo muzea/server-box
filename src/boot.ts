@@ -11,7 +11,7 @@ import fs9p from "./v86-extend/fs";
 import { SerialAdapterXtermJS } from "./v86-extend/xterm";
 import NetworkAdapter from "./v86-extend/network";
 
-const CDN_ROOT = "https://misaka.wooden.fish/";
+const CDN_ROOT = "https://server-box-r2.muyu.dev/";
 // const Local = "/temp_fs/debian-10-slim/";
 const Local = "/temp_fs/";
 
@@ -25,7 +25,7 @@ function getHddFile() {
 }
 
 function getStateFile() {
-  return DEBIAN_ROOT + (query.state || "linux-state.0314.bin.zst");
+  return DEBIAN_ROOT + (query.state || "state.bin.zst");
 }
 
 export async function bootV86(option: VMOption) {
